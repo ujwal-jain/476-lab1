@@ -1,11 +1,14 @@
 /*
 CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 */
-
 #include <iostream>
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
+
 #define PI 3.141596
+#define NUM_SLIMES 5
+#define PLANE_SIZE 30
+#define HPL_SIZE (PLANE_SIZE / 2)
 
 #include "stb_image.h"
 #include "GLSL.h"
@@ -59,6 +62,9 @@ public:
 	GLuint Texture, TextureN;
 	GLuint Texture2;
     GLuint TextureSlime;
+    GLuint TextureSlime2;
+
+    vector<slime> slimes;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
@@ -493,6 +499,13 @@ public:
         pslime->addAttribute("vertNor");
         pslime->addAttribute("vertTex");
         pslime->addUniform("part");
+
+
+        // Initialize the slimes!!
+        slimes = vector<slime>();
+        for (int i = 0; i < NUM_SLIMES; i++) {
+            slimes.emplace_back();
+        }
 	}
 
 
@@ -569,45 +582,10 @@ public:
         glUniformMatrix4fv(pslime->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 
 
-        mat4 M_body = s.getBody();
-//        mat4 M_body = translate(mat4(1), vec3(0, 0, -3)) * scale(mat4(1), vec3(3, 3, 3));
-        M = M_body;
-
-        glUniform1i(pslime->getUniform("part"), 0);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        // draw the left eye
-        M = s.getLeftEye();
-//        mat4 T_eye1 = translate(mat4(1), vec3(-0.25, 0.25, 0.5));
-//        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
-//        M = M_body * T_eye1;
-//        M = M * S;
-
-        glUniform1i(pslime->getUniform("part"), 1);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        M = s.getRightEye();
-//        mat4 T_eye2 = translate(mat4(1), vec3(0.25, 0.25, 0.5));
-//        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
-//        M = M_body * T_eye2;
-//        M = M * S;
-
-        glUniform1i(pslime->getUniform("part"), 1);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        M = s.getSmile();
-//        mat4 T_mouth = translate(mat4(1), vec3(0, -0.25, 0.5));
-//        S = scale(mat4(1), vec3(0.5, 0.1, 0.1));
-//        M = M_body * T_mouth;
-//        M = M * S;
-
-        glUniform1i(pslime->getUniform("part"), 2);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
+        for(int i = 0; i < NUM_SLIMES; i++) {
+           drawSlime(slimes[i]);
+           slimes[i].update(frametime);
+        }
         pslime->unbind();
 
 		// Draw the box using GLSL.
@@ -627,7 +605,7 @@ public:
 		glBindTexture(GL_TEXTURE_2D, Texture);
 		
 		TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, 0.0));
-		S = glm::scale(glm::mat4(1.0f), glm::vec3(25.f, 25.f, 0.f));
+		S = glm::scale(glm::mat4(1.0f), glm::vec3(PLANE_SIZE, PLANE_SIZE, 0.f));
 		float angle = 3.1415926 / 2.0f;
 		RotateX = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -638,6 +616,30 @@ public:
 
 
         glBindVertexArray(0);
+    }
+
+    void drawSlime(slime s) {
+        mat4 M_body = s.getBody();
+        mat4 M = M_body;
+        glUniform1i(pslime->getUniform("part"), 0);
+        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        // draw the left eye
+        M = s.getLeftEye();
+        glUniform1i(pslime->getUniform("part"), 1);
+        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        M = s.getRightEye();
+        glUniform1i(pslime->getUniform("part"), 1);
+        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        M = s.getSmile();
+        glUniform1i(pslime->getUniform("part"), 2);
+        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
     }
 
 };
