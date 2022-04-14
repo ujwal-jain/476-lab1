@@ -12,6 +12,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "Program.h"
 #include "MatrixStack.h"
 #include "camera.cpp"
+#include "slime.cpp"
 
 #include "WindowManager.h"
 #include "Shape.h"
@@ -558,6 +559,7 @@ public:
 		glm::mat4 S;
 
         pslime->bind();
+        static slime s = slime();
         glBindVertexArray(SlimeArrayId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SlimeIndexId);
         glActiveTexture(GL_TEXTURE2);
@@ -565,45 +567,51 @@ public:
 
         glUniformMatrix4fv(pslime->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(pslime->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        mat4 M_body = translate(mat4(1), vec3(0, 0, -3)) * scale(mat4(1), vec3(3, 3, 3));
+
+
+        mat4 M_body = s.getBody();
+//        mat4 M_body = translate(mat4(1), vec3(0, 0, -3)) * scale(mat4(1), vec3(3, 3, 3));
         M = M_body;
 
         glUniform1i(pslime->getUniform("part"), 0);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        mat4 T_eye1 = translate(mat4(1), vec3(-0.25, 0.25, 0.5));
-        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
-        M = M_body * T_eye1;
-        M = M * S;
+        // draw the left eye
+        M = s.getLeftEye();
+//        mat4 T_eye1 = translate(mat4(1), vec3(-0.25, 0.25, 0.5));
+//        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
+//        M = M_body * T_eye1;
+//        M = M * S;
 
         glUniform1i(pslime->getUniform("part"), 1);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        mat4 T_eye2 = translate(mat4(1), vec3(0.25, 0.25, 0.5));
-        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
-        M = M_body * T_eye2;
-        M = M * S;
+        M = s.getRightEye();
+//        mat4 T_eye2 = translate(mat4(1), vec3(0.25, 0.25, 0.5));
+//        S = scale(mat4(1), vec3(0.1, 0.1, 0.1));
+//        M = M_body * T_eye2;
+//        M = M * S;
 
         glUniform1i(pslime->getUniform("part"), 1);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        mat4 T_mouth = translate(mat4(1), vec3(0, -0.25, 0.5));
-        S = scale(mat4(1), vec3(0.5, 0.1, 0.1));
-        M = M_body * T_mouth;
-        M = M * S;
+        M = s.getSmile();
+//        mat4 T_mouth = translate(mat4(1), vec3(0, -0.25, 0.5));
+//        S = scale(mat4(1), vec3(0.5, 0.1, 0.1));
+//        M = M_body * T_mouth;
+//        M = M * S;
 
         glUniform1i(pslime->getUniform("part"), 2);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
         pslime->unbind();
 
 		// Draw the box using GLSL.
 		prog->bind();
-
-		
 		//send the matrices to the shaders
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -618,8 +626,8 @@ public:
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Texture);
 		
-		TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, -17));
-		S = glm::scale(glm::mat4(1.0f), glm::vec3(100.f, 100.f, 0.f));
+		TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, 0.0));
+		S = glm::scale(glm::mat4(1.0f), glm::vec3(25.f, 25.f, 0.f));
 		float angle = 3.1415926 / 2.0f;
 		RotateX = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
@@ -658,7 +666,7 @@ int main(int argc, char **argv)
 	application->initGeom();
 
 	// Loop until the user closes the window.
-	while(! glfwWindowShouldClose(windowManager->getHandle()))
+	while(!glfwWindowShouldClose(windowManager->getHandle()))
 	{
 		// Render scene.
 		application->render();
