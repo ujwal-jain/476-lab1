@@ -30,6 +30,8 @@ double get_last_elapsed_time()
 	return difference;
 }
 
+// camera movement
+
 class Application : public EventCallbacks
 {
 
@@ -96,26 +98,9 @@ public:
 
 	// callback for the mouse when clicked move the triangle when helper functions
 	// written
-	void mouseCallback(GLFWwindow *window, int button, int action, int mods)
+	void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 	{
-		double posX, posY;
-		float newPt[2];
-		if (action == GLFW_PRESS)
-		{
-			glfwGetCursorPos(window, &posX, &posY);
-			std::cout << "Pos X " << posX <<  " Pos Y " << posY << std::endl;
-
-			//change this to be the points converted to WORLD
-			//THIS IS BROKEN< YOU GET TO FIX IT - yay!
-			newPt[0] = 0;
-			newPt[1] = 0;
-
-			std::cout << "converted:" << newPt[0] << " " << newPt[1] << std::endl;
-			glBindBuffer(GL_ARRAY_BUFFER, VertexBufferID);
-			//update the vertex array with the updated points
-			glBufferSubData(GL_ARRAY_BUFFER, sizeof(float)*6, sizeof(float)*2, newPt);
-			glBindBuffer(GL_ARRAY_BUFFER, 0);
-		}
+        mycam.mouseCallback(window, xpos, ypos);
 	}
 
 	//if the window is resized, capture the new size and reset the viewport
@@ -301,6 +286,7 @@ public:
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		// Enable z-buffer test.
 		glEnable(GL_DEPTH_TEST);
+        glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		//glDisable(GL_DEPTH_TEST);
 		// Initialize the GLSL program.
 		prog = std::make_shared<Program>();
@@ -375,7 +361,11 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Create the matrix stacks - please leave these alone for now
-		
+
+		static float playerX = 0.0;
+		static float playerY = 0;
+		static float playerZ = 0;
+
 		glm::mat4 V, M, P; //View, Model and Perspective matrix
 		V = mycam.process(frametime);
 		M = glm::mat4(1);
@@ -383,7 +373,7 @@ public:
 		
 		float sangle = 3.1415926 / 2.;
 		glm::mat4 RotateXSky = glm::rotate(glm::mat4(1.0f), sangle, glm::vec3(1.0f, 0.0f, 0.0f));
-		glm::vec3 camp = -mycam.pos;
+		glm::vec3 camp = mycam.cameraPos;
 		glm::mat4 TransSky = glm::translate(glm::mat4(1.0f), camp);
 		glm::mat4 SSky = glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
 

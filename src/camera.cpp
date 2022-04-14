@@ -1,38 +1,89 @@
 #include "MatrixStack.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <GLFW/glfw3.h>
 
 class camera
 {
 public:
     glm::vec3 pos, rot;
     int w, a, s, d;
+    glm::vec3 direction;
+    bool firstMouse = true;
+    float yaw2, pitch2, lastX, lastY;
+    glm::vec3 cameraPos, cameraFront, cameraUp;
+    float camX, camY, camZ;
+
     camera()
     {
         w = a = s = d = 0;
         pos = rot = glm::vec3(0, 0, 0);
+        yaw2   = -90.0f;	// y
+        pitch2 =  0.0f;
+        lastX =  1920.0f / 2.0;
+        lastY =  1080.0 / 2.0;
+        camX = camY = camZ = 0.0f;
     }
     glm::mat4 process(double ftime)
     {
-        float speed = 0;
-        if (w == 1)
-        {
-            speed = 10*ftime;
+
+        glm::vec3 horizontal = cross(cameraFront, glm::vec3(0, 1, 0));
+        if (w) {
+            camX += 0.075 * cameraFront.x;
+            camZ += 0.075 * cameraFront.z;
         }
-        else if (s == 1)
-        {
-            speed = -10*ftime;
+
+        if (s) {
+            camX -= 0.075 * cameraFront.x;
+            camZ -= 0.075 * cameraFront.z;
         }
-        float yangle=0;
-        if (a == 1)
-            yangle = -3*ftime;
-        else if(d==1)
-            yangle = 3*ftime;
-        rot.y += yangle;
-        glm::mat4 R = glm::rotate(glm::mat4(1), rot.y, glm::vec3(0, 1, 0));
-        glm::vec4 dir = glm::vec4(0, 0, speed,1);
-        dir = dir*R;
-        pos += glm::vec3(dir.x, dir.y, dir.z);
-        glm::mat4 T = glm::translate(glm::mat4(1), pos);
-        return R*T;
+
+        if (a) {
+            camZ -= 0.075 * horizontal.z;
+            camX -= 0.075 * horizontal.x;
+        }
+
+        if (d) {
+            camZ += 0.075 * horizontal.z;
+            camX += 0.075 * horizontal.x;
+        }
+
+        cameraPos = glm::vec3(camX, camY, camZ);
+        return glm::lookAt(cameraPos, cameraPos + cameraFront, glm::vec3(0, 1, 0));
     }
+
+    void mouseCallback(GLFWwindow* window, double xpos, double ypos) {
+        float xposFloat = static_cast<float>(xpos);
+        float yposFloat = static_cast<float>(ypos);
+
+        if (firstMouse)
+        {
+            lastX = xposFloat;
+            lastY = yposFloat;
+            firstMouse = false;
+        }
+
+        float xoffset = xposFloat - lastX;
+        float yoffset = lastY - yposFloat; // reversed since y-coordinates go from bottom to top
+        lastX = xpos; // old
+        lastY = ypos; // old
+
+        float sensitivity = 0.1f; // change this value to your liking
+        xoffset *= sensitivity;
+        yoffset *= sensitivity;
+
+        yaw2 += xoffset;
+        pitch2 += yoffset;
+
+        // make sure that when pitch is out of bounds, screen doesn't get flipped
+        if (pitch2 > 89.0f)
+            pitch2 = 89.0f;
+        if (pitch2 < -89.0f)
+            pitch2 = -89.0f;
+
+        glm::vec3 front;
+        front.x = cos(glm::radians(yaw2)) * cos(glm::radians(pitch2));
+        front.y = sin(glm::radians(pitch2));
+        front.z = sin(glm::radians(yaw2)) * cos(glm::radians(pitch2));
+        cameraFront = glm::normalize(front);
+    };
 };
