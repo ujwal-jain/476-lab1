@@ -18,11 +18,11 @@ This is a requirements list for the game we are implementing
    - [X] Every frame each object moves in a constant velocity in its straight ahead direction
    to a new position (think about dot product with the main direction the object points in
    object space and its desired velocity - and watch out for the return range of acos).  
-   - [ ] But, an object may not move off the edge of the grid, and an object must respond
+   - [X] But, an object may not move off the edge of the grid, and an object must respond
    (bounce) when it collides with another object.  
    - [X] If an object’s bounding box is about to
    go off the grid, it must reverse its direction.  
-   - [ ] If an object will collide with another
+   - [X] If an object will collide with another
    object, it should either just freeze and not move for that frame (note: this could lead to
    deadlock for two objects that are moving towards each other, but in this game you
    need not handle breaking such a deadlock) or move in the opposite direction.  

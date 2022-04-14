@@ -14,6 +14,7 @@ public:
     glm::vec3 cameraPos, cameraFront, cameraUp;
     float camX, camY, camZ;
     boundingsphere sphere;
+    float speed;
 
     Player()
     {
@@ -25,29 +26,30 @@ public:
         lastY =  1080.0 / 2.0;
         camX = camY = camZ = 0.0f;
         sphere = boundingsphere(pos, 1.f);
+        speed = 0.075;
     }
     glm::mat4 process(double ftime)
     {
 
         glm::vec3 horizontal = cross(cameraFront, glm::vec3(0, 1, 0));
         if (w) {
-            camX += 0.075 * cameraFront.x;
-            camZ += 0.075 * cameraFront.z;
+            camX += speed * cameraFront.x;
+            camZ += speed * cameraFront.z;
         }
 
         if (s) {
-            camX -= 0.075 * cameraFront.x;
-            camZ -= 0.075 * cameraFront.z;
+            camX -= speed * cameraFront.x;
+            camZ -= speed * cameraFront.z;
         }
 
         if (a) {
-            camZ -= 0.075 * horizontal.z;
-            camX -= 0.075 * horizontal.x;
+            camZ -= speed * horizontal.z;
+            camX -= speed * horizontal.x;
         }
 
         if (d) {
-            camZ += 0.075 * horizontal.z;
-            camX += 0.075 * horizontal.x;
+            camZ += speed * horizontal.z;
+            camX += speed * horizontal.x;
         }
 
         cameraPos = glm::vec3(camX, camY, camZ);
@@ -90,4 +92,14 @@ public:
         front.z = sin(glm::radians(yaw2)) * cos(glm::radians(pitch2));
         cameraFront = glm::normalize(front);
     };
+
+    void increaseSpeed() {
+        speed += 0.01;
+    }
+
+    void decreaseSpeed() {
+        if (speed > 0.01) {
+            speed -= 0.01;
+        }
+    }
 };

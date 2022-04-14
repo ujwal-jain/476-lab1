@@ -6,7 +6,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #define STB_IMAGE_IMPLEMENTATION
 
 #define PI 3.141596
-#define NUM_SLIMES 5
+#define NUM_SLIMES 20
 #ifndef PLANE_SIZE
 #define PLANE_SIZE 30
 #define HPL_SIZE (PLANE_SIZE / 2.f)
@@ -74,15 +74,14 @@ public:
     boundingplane bpTop = boundingplane(0.0f, 0.0f, 1.0f, -15.0f);
     boundingplane bpDown = boundingplane(0.0f, 0.0f, -1.0f, -15.0f);
 
-    // z - d = 0
-    // 0,0,-15
-    // -z - d = 0
-    // 15
-
     vector<slime> slimes;
+    bool done = false;
 
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
+        if(done) {
+            glfwSetWindowShouldClose(window, GL_TRUE);
+        }
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -120,6 +119,12 @@ public:
 		{
             player.d = 0;
 		}
+        if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+            player.increaseSpeed();
+        }
+        if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+            player.decreaseSpeed();
+        }
 	}
 
 	// callback for the mouse when clicked move the triangle when helper functions
@@ -535,11 +540,12 @@ public:
 
         // Initialize the slimes!!
         slimes = vector<slime>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < NUM_SLIMES; i++) {
             slimes.emplace_back();
         }
+        numCollided = 0;
         cout << "Remaining slimes: " << slimes.size() << endl;
-        cout << "Collided with " << NUM_SLIMES - slimes.size() << " slimes" << endl;
+        cout << "Collided with " << numCollided << " slimes" << endl;
     }
 
 
@@ -550,6 +556,7 @@ public:
 	********/
 	void render()
 	{
+
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		double frametime = get_last_elapsed_time();
@@ -628,6 +635,10 @@ public:
         for(int i = delIndices.size() - 1; i >= 0; i--) {
             slimes.erase(slimes.begin() + delIndices[i]);
             cout << "Remaining slimes: " << slimes.size() << endl;
+            if(slimes.size() == 0) {
+                cout << "You win!" << endl;
+                done = true;
+            }
         }
 
         for(int i = 0; i < slimes.size(); i++) {
@@ -637,25 +648,30 @@ public:
                 slimes[i].startTimer();
             }
 
-            for (int j = 0; j < slimes.size(); j++) {
-                if(collisions::detectSphereSphere(slimes[j].sphere, slimes[i].sphere) && i != j) {
-                    slimes[i].dir = -slimes[i].dir;
-                    slimes[j].dir = -slimes[j].dir;
-//                    float angle = (float)(rand() % (2 * 314)) / 100.0f;
-//                    slimes[i].dir = vec2(cos(angle), sin(angle));
-//                    angle = (float)(rand() % (2 * 314)) / 100.0f;
-//                    slimes[j].dir = vec2(cos(angle), sin(angle));
-                }
-            }
+
 
             if(collisions::detectPlaneSphere(bpLeft, slimes[i].sphere)) {
-                slimes[i].dir.x = -slimes[i].dir.x;
+                slimes[i].dir.x = -abs(slimes[i].dir.x);
             } else if(collisions::detectPlaneSphere(bpRight, slimes[i].sphere)) {
-                slimes[i].dir.x = -slimes[i].dir.x;
+                slimes[i].dir.x = abs(slimes[i].dir.x);
             } else if(collisions::detectPlaneSphere(bpDown, slimes[i].sphere)) {
-                slimes[i].dir.y = -slimes[i].dir.y;
+                slimes[i].dir.y = abs(slimes[i].dir.y);
             } else if(collisions::detectPlaneSphere(bpTop, slimes[i].sphere)) {
-                slimes[i].dir.y = -slimes[i].dir.y;
+                slimes[i].dir.y = -abs(slimes[i].dir.y);
+            }
+        }
+
+        for(int i = 0; i < slimes.size(); i++) {
+            for (int j = i + 1; j < slimes.size(); j++) {
+                if(collisions::detectSphereSphere(slimes[j].sphere, slimes[i].sphere)) {
+                    vec2 dir = slimes[j].dir + slimes[i].dir;
+                    if(dir.x == 0 && dir.y == 0) {
+                        continue;
+                    }
+                    dir = normalize(dir);
+                    slimes[i].dir = -dir;
+                    slimes[j].dir = dir;
+                }
             }
         }
         pslime->unbind();
@@ -716,13 +732,12 @@ public:
         if(s->timeLeft == 0) {
             return false;
         }
-        else if(s->timeLeft < 1 && s->timeLeft > 0) {
+        else if(s->timeLeft < 1.0f) {
             return true;
         }
 
         return false;
     }
-
 };
 //******************************************************************************************
 int main(int argc, char **argv)
