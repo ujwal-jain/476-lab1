@@ -119,6 +119,12 @@ public:
 		{
             player.d = 0;
 		}
+        if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
+            player.increaseSpeed();
+        }
+        if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
+            player.decreaseSpeed();
+        }
 	}
 
 	// callback for the mouse when clicked move the triangle when helper functions
