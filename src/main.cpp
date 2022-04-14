@@ -14,8 +14,9 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "GLSL.h"
 #include "Program.h"
 #include "MatrixStack.h"
-#include "camera.cpp"
+#include "player.cpp"
 #include "slime.cpp"
+#include "collisions.h"
 
 #include "WindowManager.h"
 #include "Shape.h"
@@ -36,7 +37,7 @@ double get_last_elapsed_time()
 	return difference;
 }
 
-// camera movement
+// Player movement
 
 class Application : public EventCallbacks
 {
@@ -56,13 +57,15 @@ public:
 
     GLuint SlimeArrayId, SlimeBufferId, SlimeNormId, SlimeTexId, SlimeIndexId;
 
-    camera mycam;
+    Player player;
 
 	//texture data
 	GLuint Texture, TextureN;
 	GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
+
+    int numCollided = 0;
 
     vector<slime> slimes;
 
@@ -75,35 +78,35 @@ public:
 		
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{
-			mycam.w = 1;
+            player.w = 1;
 		}
 		if (key == GLFW_KEY_W && action == GLFW_RELEASE)
 		{
-			mycam.w = 0;
+            player.w = 0;
 		}
 		if (key == GLFW_KEY_S && action == GLFW_PRESS)
 		{
-			mycam.s = 1;
+            player.s = 1;
 		}
 		if (key == GLFW_KEY_S && action == GLFW_RELEASE)
 		{
-			mycam.s = 0;
+            player.s = 0;
 		}
 		if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
-			mycam.a = 1;
+            player.a = 1;
 		}
 		if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
-			mycam.a = 0;
+            player.a = 0;
 		}
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
-			mycam.d = 1;
+            player.d = 1;
 		}
 		if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
-			mycam.d = 0;
+            player.d = 0;
 		}
 	}
 
@@ -111,7 +114,7 @@ public:
 	// written
 	void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 	{
-        mycam.mouseCallback(window, xpos, ypos);
+        player.mouseCallback(window, xpos, ypos);
 	}
 
 	//if the window is resized, capture the new size and reset the viewport
@@ -417,6 +420,20 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
+        //texture slime when hit
+        str = resourceDirectory + "/slimehit.jpeg";
+        strcpy(filepath, str.c_str());
+        data = stbi_load(filepath, &width, &height, &channels, 4);
+        glGenTextures(1, &TextureSlime2);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, TextureSlime2);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
 		//[TWOTEXTURES]
 		//set the 2 textures to the correct samplers in the fragment shader:
 		GLuint Tex1Location = glGetUniformLocation(prog->pid, "tex");//tex, tex2... sampler in the fragment shader
@@ -434,8 +451,10 @@ public:
 		glUniform1i(Tex2Location, 1);
 
         Tex1Location = glGetUniformLocation(pslime->pid, "tex");
+        Tex2Location = glGetUniformLocation(pslime->pid, "tex2");
         glUseProgram(pslime->pid);
         glUniform1i(Tex1Location, 2);
+        glUniform1i(Tex2Location, 3);
 	}
 
 	//General OGL initialization - set OGL state here
@@ -499,6 +518,7 @@ public:
         pslime->addAttribute("vertNor");
         pslime->addAttribute("vertTex");
         pslime->addUniform("part");
+        pslime->addUniform("hit");
 
 
         // Initialize the slimes!!
@@ -506,7 +526,9 @@ public:
         for (int i = 0; i < NUM_SLIMES; i++) {
             slimes.emplace_back();
         }
-	}
+        cout << "Remaining slimes: " << slimes.size() << endl;
+        cout << "Collided with " << NUM_SLIMES - slimes.size() << " slimes" << endl;
+    }
 
 
 	/****DRAW
@@ -536,13 +558,13 @@ public:
 		static float playerZ = 0;
 
 		glm::mat4 V, M, P; //View, Model and Perspective matrix
-		V = mycam.process(frametime);
+		V = player.process(frametime);
 		M = glm::mat4(1);
 		P = glm::perspective((float)(3.14159 / 4.), (float)((float)width/ (float)height), 0.1f, 1000.0f); //so much type casting... GLM metods are quite funny ones
 		
 		float sangle = 3.1415926 / 2.;
 		glm::mat4 RotateXSky = glm::rotate(glm::mat4(1.0f), sangle, glm::vec3(1.0f, 0.0f, 0.0f));
-		glm::vec3 camp = mycam.cameraPos;
+		glm::vec3 camp = player.cameraPos;
 		glm::mat4 TransSky = glm::translate(glm::mat4(1.0f), camp);
 		glm::mat4 SSky = glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
 
@@ -553,7 +575,7 @@ public:
 		glUniformMatrix4fv(psky->getUniform("P"), 1, GL_FALSE, &P[0][0]);
 		glUniformMatrix4fv(psky->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 		glUniformMatrix4fv(psky->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glUniform3fv(psky->getUniform("campos"), 1, &mycam.pos[0]);
+		glUniform3fv(psky->getUniform("campos"), 1, &player.pos[0]);
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Texture2);
 
@@ -572,19 +594,36 @@ public:
 		glm::mat4 S;
 
         pslime->bind();
-        static slime s = slime();
         glBindVertexArray(SlimeArrayId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SlimeIndexId);
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, TextureSlime);
+        glActiveTexture(GL_TEXTURE3);
+        glBindTexture(GL_TEXTURE_2D, TextureSlime2);
 
         glUniformMatrix4fv(pslime->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(pslime->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 
-
-        for(int i = 0; i < NUM_SLIMES; i++) {
-           drawSlime(slimes[i]);
+        vector<int> delIndices = vector<int>();
+        // update the slime, then draw it
+        for(int i = 0; i < slimes.size(); i++) {
            slimes[i].update(frametime);
+           // if the slime is dead, add it to the list of indices to delete
+           if(drawSlime(&slimes[i])) {
+               delIndices.push_back(i);
+           }
+        }
+        for(int i = delIndices.size() - 1; i >= 0; i--) {
+            slimes.erase(slimes.begin() + delIndices[i]);
+            cout << "Remaining slimes: " << slimes.size() << endl;
+        }
+
+        for(int i = 0; i < slimes.size(); i++) {
+            if(collisions::detectSphereSphere(slimes[i].sphere, player.sphere) && slimes[i].timeLeft == 0) {
+                numCollided += 1;
+                cout << "Collided with " << numCollided << " slimes" << endl;
+                slimes[i].startTimer();
+            }
         }
         pslime->unbind();
 
@@ -594,7 +633,7 @@ public:
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glUniform3fv(prog->getUniform("campos"), 1, &mycam.pos[0]);	
+		glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
 	
 		glBindVertexArray(VertexArrayID);
 		//actually draw from vertex 0, 3 vertices
@@ -618,28 +657,37 @@ public:
         glBindVertexArray(0);
     }
 
-    void drawSlime(slime s) {
-        mat4 M_body = s.getBody();
+    bool drawSlime(slime *s) {
+        glUniform1i(pslime->getUniform("hit"), s->timeLeft != 0);
+        mat4 M_body = s->getBody();
         mat4 M = M_body;
         glUniform1i(pslime->getUniform("part"), 0);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
         // draw the left eye
-        M = s.getLeftEye();
+        M = s->getLeftEye();
         glUniform1i(pslime->getUniform("part"), 1);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        M = s.getRightEye();
+        M = s->getRightEye();
         glUniform1i(pslime->getUniform("part"), 1);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        M = s.getSmile();
+        M = s->getSmile();
         glUniform1i(pslime->getUniform("part"), 2);
         glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+        if(s->timeLeft == 0) {
+            return false;
+        }
+        else if(s->timeLeft < 1 && s->timeLeft > 0) {
+            return true;
+        }
+
+        return false;
     }
 
 };
