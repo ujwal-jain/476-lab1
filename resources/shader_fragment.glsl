@@ -10,4 +10,6 @@ void main()
 {
 vec4 tcol = texture(tex, vertex_tex*10.);
 color = tcol;
+    color *= 0.3;
+    color.a = 1;
 }
