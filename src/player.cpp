@@ -1,8 +1,9 @@
 #include "MatrixStack.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
+#include "boundingsphere.h"
 
-class camera
+class Player
 {
 public:
     glm::vec3 pos, rot;
@@ -12,8 +13,9 @@ public:
     float yaw2, pitch2, lastX, lastY;
     glm::vec3 cameraPos, cameraFront, cameraUp;
     float camX, camY, camZ;
+    boundingsphere sphere;
 
-    camera()
+    Player()
     {
         w = a = s = d = 0;
         pos = rot = glm::vec3(0, 0, 0);
@@ -22,6 +24,7 @@ public:
         lastX =  1920.0f / 2.0;
         lastY =  1080.0 / 2.0;
         camX = camY = camZ = 0.0f;
+        sphere = boundingsphere(pos, 1.f);
     }
     glm::mat4 process(double ftime)
     {
@@ -48,6 +51,7 @@ public:
         }
 
         cameraPos = glm::vec3(camX, camY, camZ);
+        sphere.updateCenter(cameraPos);
         return glm::lookAt(cameraPos, cameraPos + cameraFront, glm::vec3(0, 1, 0));
     }
 
