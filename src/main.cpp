@@ -7,8 +7,10 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 
 #define PI 3.141596
 #define NUM_SLIMES 5
+#ifndef PLANE_SIZE
 #define PLANE_SIZE 30
-#define HPL_SIZE (PLANE_SIZE / 2)
+#define HPL_SIZE (PLANE_SIZE / 2.f)
+#endif
 
 #include "stb_image.h"
 #include "GLSL.h"
@@ -17,6 +19,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "player.cpp"
 #include "slime.cpp"
 #include "collisions.h"
+#include "boundingplane.h"
 
 #include "WindowManager.h"
 #include "Shape.h"
@@ -66,6 +69,10 @@ public:
     GLuint TextureSlime2;
 
     int numCollided = 0;
+    boundingplane bpLeft = boundingplane(1.0f, 0.0f, 1.0f, -15.0f);
+    boundingplane bpRight = boundingplane(1.0f, 0.0f, 0.0f, 15.0f);
+    boundingplane bpTop = boundingplane(0.0f, 0.0f, 1.0f, 15.0f);
+    boundingplane bpDown = boundingplane(0.0f, 0.0f, 1.0f, 15.0f);
 
     vector<slime> slimes;
 
@@ -624,6 +631,22 @@ public:
                 cout << "Collided with " << numCollided << " slimes" << endl;
                 slimes[i].startTimer();
             }
+
+            for (int j = 0; j < slimes.size(); j++) {
+                if(collisions::detectSphereSphere(slimes[j].sphere, slimes[i].sphere) && i != j) {
+                    cout << "slimes collided!" << endl;
+                }
+            }
+
+            if(collisions::detectPlaneSphere(bpLeft, slimes[i].sphere)) {
+                cout << "slimes collided! 1 " << endl;
+            } else if(collisions::detectPlaneSphere(bpRight, slimes[i].sphere)) {
+                cout << "slimes collided! 2" << endl;
+            } else if(collisions::detectPlaneSphere(bpDown, slimes[i].sphere)) {
+                cout << "slimes collided! 3" << endl;
+            } else if(collisions::detectPlaneSphere(bpTop, slimes[i].sphere)) {
+                cout << "slimes collided! 4" << endl;
+            }
         }
         pslime->unbind();
 
@@ -646,12 +669,21 @@ public:
 		TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, 0.0));
 		S = glm::scale(glm::mat4(1.0f), glm::vec3(PLANE_SIZE, PLANE_SIZE, 0.f));
 		float angle = 3.1415926 / 2.0f;
-		RotateX = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 0.0f, 0.0f));
+        RotateX = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
 		M = TransZ *  RotateX * S;
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);		
-		prog->unbind();
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+
+        TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, -15));
+        S = glm::scale(glm::mat4(1.0f), glm::vec3(PLANE_SIZE, PLANE_SIZE, 0.f));
+        angle = 3.1415926 / 2.0f;
+        RotateX = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
+
+        M = TransZ *  RotateX * S;
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+        prog->unbind();
 
 
         glBindVertexArray(0);

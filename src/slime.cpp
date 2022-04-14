@@ -3,6 +3,11 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define PI 3.141596
 
+#ifndef PLANE_SIZE
+#define PLANE_SIZE 30
+#define HPL_SIZE (PLANE_SIZE / 2.f)
+#endif
+
 #include "GLSL.h"
 #include "Program.h"
 #include "MatrixStack.h"
