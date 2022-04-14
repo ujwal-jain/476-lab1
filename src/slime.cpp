@@ -22,8 +22,8 @@
 using namespace glm;
 
 #define PRIMDIR vec2(0.0f, -1.0f)
-#define HSPEED 0.2f
-#define SLIME_SIZE 1.0f
+#define HSPEED 0.4f
+//#define SLIME_SIZE 1.0f
 #define TIME_LEFT 200.0f
 #define SHRINK_SPEED 100.f
 
@@ -35,15 +35,16 @@ public:
     float hspeed;
     boundingsphere sphere;
     float timeLeft;
+    float size;
 
     slime() {
         pos = vec3((float)(rand()%PLANE_SIZE) - HPL_SIZE, 0.0f, (float)(rand()%PLANE_SIZE) - HPL_SIZE);
         float angle = (float)(rand() % (2 * 314)) / 100.0f;
-
+        size = (rand() % 10 + 5) / 10.f;
         dir = vec2(cos(angle), sin(angle));
         speed = ((float)(rand() % 20) + 10) / 10.0f;
         hspeed = HSPEED;
-        float radius = sqrt(3 * pow(SLIME_SIZE, 2)) / 2.0f;
+        float radius = sqrt(3 * pow(size, 2)) / 2.0f * 0.8f;
         sphere = boundingsphere(pos, radius);
         timeLeft = 0;
     }
@@ -76,11 +77,11 @@ public:
         // Size of slime shrinks if the player has collided with it already
         mat4 S;
         if(timeLeft == 0)
-            S = scale(mat4(1.0f), vec3(SLIME_SIZE, SLIME_SIZE, SLIME_SIZE));
+            S = scale(mat4(1.0f), vec3(size, size, size));
         else
-            S = scale(mat4(1.0f), vec3(SLIME_SIZE, SLIME_SIZE, SLIME_SIZE) * (float)timeLeft / TIME_LEFT);
+            S = scale(mat4(1.0f), vec3(size, size, size) * (float)timeLeft / TIME_LEFT);
 
-        return translate(mat4(1), pos + vec3(0, -1.3f + 0.5, 0.0f))
+        return translate(mat4(1), pos + vec3(0, -1.3f + size / 2, 0.0f))
             * rotate(mat4(1), angle, vec3(0, 1, 0))
             * S;
     }

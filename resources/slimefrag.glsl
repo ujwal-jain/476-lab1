@@ -10,6 +10,13 @@ uniform sampler2D tex2;
 uniform int hit;
 uniform int part;
 
+float getdiff(vec3 lp) {
+    vec3 n = normalize(vertex_normal);
+    vec3 ld = vec3(lp-vertex_pos);
+    float diff = dot(n, ld);
+    return clamp(diff, 0.3, 1.0);
+}
+
 void main()
 {
     vec4 tcol;
@@ -29,4 +36,8 @@ void main()
             color = tcol;
             color.a = 1;
     }
+
+    float diff = getdiff(vec3(100, 100, 100));
+
+    color.rgb *= diff;
 }

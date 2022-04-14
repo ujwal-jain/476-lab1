@@ -396,7 +396,7 @@ public:
 		char filepath[1000];
 
 		//texture 1
-		string str = resourceDirectory + "/grass.jpg";
+		string str = resourceDirectory + "/water.jpeg";
 		strcpy(filepath, str.c_str());
 		unsigned char* data = stbi_load(filepath, &width, &height, &channels, 4);
 		glGenTextures(1, &Texture);
@@ -410,7 +410,7 @@ public:
 		glGenerateMipmap(GL_TEXTURE_2D);
 
 		//texture 2
-		str = resourceDirectory + "/sky.jpg";
+		str = resourceDirectory + "/night.jpg";
 		strcpy(filepath, str.c_str());
 		data = stbi_load(filepath, &width, &height, &channels, 4);
 		glGenTextures(1, &Texture2);
