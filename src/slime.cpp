@@ -39,6 +39,9 @@ public:
     slime() {
         pos = vec3((float)(rand()%PLANE_SIZE) - HPL_SIZE, 0.0f, (float)(rand()%PLANE_SIZE) - HPL_SIZE);
         float angle = (float)(rand() % (2 * 314)) / 100.0f;
+
+        std::cout << angle << std::endl;
+        std::cout << angle << std::endl;
         dir = vec2(cos(angle), sin(angle));
         speed = ((float)(rand() % 20) + 2) / 20.0f * 2;
         hspeed = HSPEED;

@@ -69,10 +69,15 @@ public:
     GLuint TextureSlime2;
 
     int numCollided = 0;
-    boundingplane bpLeft = boundingplane(1.0f, 0.0f, 1.0f, -15.0f);
-    boundingplane bpRight = boundingplane(1.0f, 0.0f, 0.0f, 15.0f);
-    boundingplane bpTop = boundingplane(0.0f, 0.0f, 1.0f, 15.0f);
-    boundingplane bpDown = boundingplane(0.0f, 0.0f, 1.0f, 15.0f);
+    boundingplane bpLeft = boundingplane(1.0f, 0.0f, 0.0f, -15.0f);
+    boundingplane bpRight = boundingplane(-1.0f, 0.0f, 0.0f, -15.0f);
+    boundingplane bpTop = boundingplane(0.0f, 0.0f, 1.0f, -15.0f);
+    boundingplane bpDown = boundingplane(0.0f, 0.0f, -1.0f, -15.0f);
+
+    // z - d = 0
+    // 0,0,-15
+    // -z - d = 0
+    // 15
 
     vector<slime> slimes;
 
@@ -530,7 +535,7 @@ public:
 
         // Initialize the slimes!!
         slimes = vector<slime>();
-        for (int i = 0; i < NUM_SLIMES; i++) {
+        for (int i = 0; i < 10; i++) {
             slimes.emplace_back();
         }
         cout << "Remaining slimes: " << slimes.size() << endl;
@@ -634,18 +639,23 @@ public:
 
             for (int j = 0; j < slimes.size(); j++) {
                 if(collisions::detectSphereSphere(slimes[j].sphere, slimes[i].sphere) && i != j) {
-                    cout << "slimes collided!" << endl;
+                    slimes[i].dir = -slimes[i].dir;
+                    slimes[j].dir = -slimes[j].dir;
+//                    float angle = (float)(rand() % (2 * 314)) / 100.0f;
+//                    slimes[i].dir = vec2(cos(angle), sin(angle));
+//                    angle = (float)(rand() % (2 * 314)) / 100.0f;
+//                    slimes[j].dir = vec2(cos(angle), sin(angle));
                 }
             }
 
             if(collisions::detectPlaneSphere(bpLeft, slimes[i].sphere)) {
-                cout << "slimes collided! 1 " << endl;
+                slimes[i].dir.x = -slimes[i].dir.x;
             } else if(collisions::detectPlaneSphere(bpRight, slimes[i].sphere)) {
-                cout << "slimes collided! 2" << endl;
+                slimes[i].dir.x = -slimes[i].dir.x;
             } else if(collisions::detectPlaneSphere(bpDown, slimes[i].sphere)) {
-                cout << "slimes collided! 3" << endl;
+                slimes[i].dir.y = -slimes[i].dir.y;
             } else if(collisions::detectPlaneSphere(bpTop, slimes[i].sphere)) {
-                cout << "slimes collided! 4" << endl;
+                slimes[i].dir.y = -slimes[i].dir.y;
             }
         }
         pslime->unbind();
@@ -674,15 +684,6 @@ public:
 		M = TransZ *  RotateX * S;
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
-
-        TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, -15));
-        S = glm::scale(glm::mat4(1.0f), glm::vec3(PLANE_SIZE, PLANE_SIZE, 0.f));
-        angle = 3.1415926 / 2.0f;
-        RotateX = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(1.0f, 0.0f, 0.0f));
-
-        M = TransZ *  RotateX * S;
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
         prog->unbind();
 
 
