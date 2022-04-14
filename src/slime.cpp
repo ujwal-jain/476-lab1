@@ -40,12 +40,10 @@ public:
         pos = vec3((float)(rand()%PLANE_SIZE) - HPL_SIZE, 0.0f, (float)(rand()%PLANE_SIZE) - HPL_SIZE);
         float angle = (float)(rand() % (2 * 314)) / 100.0f;
 
-        std::cout << angle << std::endl;
-        std::cout << angle << std::endl;
         dir = vec2(cos(angle), sin(angle));
-        speed = ((float)(rand() % 20) + 2) / 20.0f * 2;
+        speed = ((float)(rand() % 20) + 10) / 10.0f;
         hspeed = HSPEED;
-        float radius = sqrt(pow(SLIME_SIZE / 2.0f, 2) + pow(SLIME_SIZE / 2.0f, 2) + pow(SLIME_SIZE / 2.0f, 2));
+        float radius = sqrt(3 * pow(SLIME_SIZE, 2)) / 2.0f;
         sphere = boundingsphere(pos, radius);
         timeLeft = 0;
     }
@@ -55,7 +53,6 @@ public:
             timeLeft -= frametime * SHRINK_SPEED;
             return;
         }
-
         if(pos.y > 0.15f)
             hspeed = -HSPEED;
         else if(pos.y < 0.0f)
