@@ -60,7 +60,7 @@ This is a requirements list for the game we are implementing
    motion is the same as the current Player view orientation (as set by the mouse
    controls).
    
-   - [ ] The speed of motion (player/Player velocity) is initially set at a default value,
+   - [X] The speed of motion (player/Player velocity) is initially set at a default value,
    but you may add keys to increase the speed if desired.
    - [ ] Optional: consider adding a weak spring to your Player to help with more natural
    movement (Player lags behind the user slightly).
