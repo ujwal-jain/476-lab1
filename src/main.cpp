@@ -29,6 +29,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 using namespace std;
 using namespace glm;
 shared_ptr<Shape> shape;
+shared_ptr<Shape> world;
 
 
 double get_last_elapsed_time()
@@ -50,7 +51,7 @@ public:
 	WindowManager * windowManager = nullptr;
 
 	// Our shader program
-	std::shared_ptr<Program> prog,psky, pslime;
+	std::shared_ptr<Program> prog,psky, pslime, worldprog;
 
 	// Contains vertex information for OpenGL
 	GLuint VertexArrayID;
@@ -392,6 +393,11 @@ public:
 		shape->resize();
 		shape->init();
 
+        world = make_shared<Shape>();
+        world->loadMesh(resourceDirectory + "/world1.0.obj");
+        world->resize();
+        world->init();
+
 		int width, height, channels;
 		char filepath[1000];
 
@@ -502,6 +508,22 @@ public:
 		prog->addAttribute("vertNor");
 		prog->addAttribute("vertTex");
 
+        worldprog = std::make_shared<Program>();
+        worldprog->setVerbose(true);
+        worldprog->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
+        if (!worldprog->init())
+        {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        worldprog->addUniform("P");
+        worldprog->addUniform("V");
+        worldprog->addUniform("M");
+        worldprog->addUniform("campos");
+        worldprog->addAttribute("vertPos");
+        worldprog->addAttribute("vertNor");
+        worldprog->addAttribute("vertTex");
+
 
 		psky = std::make_shared<Program>();
 		psky->setVerbose(true);
@@ -589,8 +611,7 @@ public:
 
 		M = TransSky * RotateXSky * SSky;
 
-
-		psky->bind();		
+		psky->bind();
 		glUniformMatrix4fv(psky->getUniform("P"), 1, GL_FALSE, &P[0][0]);
 		glUniformMatrix4fv(psky->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 		glUniformMatrix4fv(psky->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -603,7 +624,7 @@ public:
 		float dn = sin(ttime)*0.5 +0.5;
 		glUniform1f(psky->getUniform("dn"), dn);		
 		glDisable(GL_DEPTH_TEST);
-		shape->draw(psky, GL_FALSE);
+		//shape->draw(psky, GL_FALSE);
 		glEnable(GL_DEPTH_TEST);
 		psky->unbind();
 
@@ -628,9 +649,9 @@ public:
         for(int i = 0; i < slimes.size(); i++) {
            slimes[i].update(frametime);
            // if the slime is dead, add it to the list of indices to delete
-           if(drawSlime(&slimes[i])) {
-               delIndices.push_back(i);
-           }
+           //if(drawSlime(&slimes[i])) {
+               //delIndices.push_back(i);
+           //}
         }
         for(int i = delIndices.size() - 1; i >= 0; i--) {
             slimes.erase(slimes.begin() + delIndices[i]);
@@ -699,9 +720,12 @@ public:
 
 		M = TransZ *  RotateX * S;
 		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
-        prog->unbind();
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
 
+        M = glm::scale(glm::mat4(1.0f), glm::vec3(15, 15, 15));
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        world->draw(prog, GL_FALSE);
+        prog->unbind();
 
         glBindVertexArray(0);
     }
