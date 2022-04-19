@@ -30,6 +30,7 @@ using namespace std;
 using namespace glm;
 shared_ptr<Shape> shape;
 shared_ptr<Shape> world;
+shared_ptr<Shape> playerOBJ;
 
 
 double get_last_elapsed_time()
@@ -398,6 +399,11 @@ public:
         world->resize();
         world->init();
 
+        playerOBJ = make_shared<Shape>();
+        playerOBJ->loadMesh(resourceDirectory + "/witch.obj");
+        playerOBJ->resize();
+        playerOBJ->init();
+
 		int width, height, channels;
 		char filepath[1000];
 
@@ -725,6 +731,11 @@ public:
         M = glm::scale(glm::mat4(1.0f), glm::vec3(15, 15, 15));
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         world->draw(prog, GL_FALSE);
+
+        M = glm::translate(glm::mat4(1.0f), glm::vec3(7.5, 0, 10)) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        playerOBJ->draw(prog, GL_FALSE);
+
         prog->unbind();
 
         glBindVertexArray(0);

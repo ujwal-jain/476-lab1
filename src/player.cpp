@@ -24,7 +24,9 @@ public:
         pitch2 =  0.0f;
         lastX =  1920.0f / 2.0;
         lastY =  1080.0 / 2.0;
-        camX = camY = camZ = 0.0f;
+        camX = 7.5f;
+        camY = 0.0f;
+        camZ = 30.0f;
         sphere = boundingsphere(pos, 1.f);
         speed = 0.075;
     }
