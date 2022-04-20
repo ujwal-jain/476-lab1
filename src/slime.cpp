@@ -1,7 +1,10 @@
 #include <iostream>
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
+
+#ifndef PI
 #define PI 3.141596
+#endif
 
 #ifndef PLANE_SIZE
 #define PLANE_SIZE 30
