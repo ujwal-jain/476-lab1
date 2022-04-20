@@ -3,6 +3,8 @@
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
 
+#define PLAYERSCALE 0.3f
+
 class Player
 {
 public:
@@ -19,8 +21,8 @@ public:
     mat4 getModel() const {
         return translate(mat4(1), pos)
             * rot
-            * rotate(mat4(1), radians(90.0f), vec3(1, 0, 0))
-            * scale(mat4(1), vec3(0.5, 0.5, 0.5));
+            * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+            * scale(mat4(1), vec3(PLAYERSCALE));
     }
 
     void playerRotation() {

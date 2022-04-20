@@ -45,96 +45,83 @@ double get_last_elapsed_time()
 
 // Player movement
 
-class Application : public EventCallbacks
-{
+class Application : public EventCallbacks {
 
 public:
 
-	WindowManager * windowManager = nullptr;
+    WindowManager *windowManager = nullptr;
 
-	// Our shader program
-	std::shared_ptr<Program> prog,psky, pslime, pworld;
+    // Our shader program
+    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer;
 
-	// Contains vertex information for OpenGL
-	GLuint VertexArrayID;
+    // Contains vertex information for OpenGL
+    GLuint VertexArrayID;
 
-	// Data necessary to give our box to OpenGL
-	GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
+    // Data necessary to give our box to OpenGL
+    GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
     Player player;
     World world;
 
-	//texture data
-	GLuint Texture;
-	GLuint Texture2;
+    //texture data
+    GLuint Texture;
+    GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
 
-	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
-	{
-		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		{
-			glfwSetWindowShouldClose(window, GL_TRUE);
-		}
-		
-		if (key == GLFW_KEY_W && action == GLFW_PRESS)
-		{
+    void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, GL_TRUE);
+        }
+
+        if (key == GLFW_KEY_W && action == GLFW_PRESS) {
             world.w = 1;
             player.w = 1;
-		}
-		if (key == GLFW_KEY_W && action == GLFW_RELEASE)
-		{
+        }
+        if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
             world.w = 0;
             player.w = 0;
-		}
-		if (key == GLFW_KEY_S && action == GLFW_PRESS)
-		{
+        }
+        if (key == GLFW_KEY_S && action == GLFW_PRESS) {
             world.s = 1;
             player.s = 1;
-		}
-		if (key == GLFW_KEY_S && action == GLFW_RELEASE)
-		{
+        }
+        if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
             world.s = 0;
             player.s = 0;
-		}
-		if (key == GLFW_KEY_A && action == GLFW_PRESS)
-		{
+        }
+        if (key == GLFW_KEY_A && action == GLFW_PRESS) {
             world.a = 1;
             player.a = 1;
-		}
-		if (key == GLFW_KEY_A && action == GLFW_RELEASE)
-		{
+        }
+        if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
             world.a = 0;
             player.a = 0;
-		}
-		if (key == GLFW_KEY_D && action == GLFW_PRESS)
-		{
+        }
+        if (key == GLFW_KEY_D && action == GLFW_PRESS) {
             world.d = 1;
             player.d = 1;
-		}
-		if (key == GLFW_KEY_D && action == GLFW_RELEASE)
-		{
+        }
+        if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
             world.d = 0;
             player.d = 0;
-		}
+        }
 
-	}
+    }
 
-	// callback for the mouse when clicked move the triangle when helper functions
-	// written
-	void mouseCallback(GLFWwindow* window, double xpos, double ypos)
-	{
+    // callback for the mouse when clicked move the triangle when helper functions
+    // written
+    void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
 
-	}
+    }
 
-	//if the window is resized, capture the new size and reset the viewport
-	void resizeCallback(GLFWwindow *window, int in_width, int in_height)
-	{
-		//get the window size - may be different then pixels for retina
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
-		glViewport(0, 0, width, height);
-	}
+    //if the window is resized, capture the new size and reset the viewport
+    void resizeCallback(GLFWwindow *window, int in_width, int in_height) {
+        //get the window size - may be different then pixels for retina
+        int width, height;
+        glfwGetFramebufferSize(window, &width, &height);
+        glViewport(0, 0, width, height);
+    }
 
     void initPlane() {
         //generate the VAO
@@ -148,10 +135,10 @@ public:
 
         GLfloat rect_vertices[] = {
                 // front
-                -1.0, -1.0,  1.0,//LD
-                1.0, -1.0,  1.0,//RD
-                1.0,  1.0,  1.0,//RU
-                -1.0,  1.0,  1.0,//LU
+                -1.0, -1.0, 1.0,//LD
+                1.0, -1.0, 1.0,//RD
+                1.0, 1.0, 1.0,//RU
+                -1.0, 1.0, 1.0,//LU
         };
         //make it a bit smaller
         for (int i = 0; i < 12; i++)
@@ -162,7 +149,7 @@ public:
         //we need to set up the vertex array
         glEnableVertexAttribArray(0);
         //key function to get up how many elements to pull out at a time (3)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
 
         //color
         GLfloat cube_norm[] = {
@@ -178,7 +165,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, VertexNormDBox);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cube_norm), cube_norm, GL_STATIC_DRAW);
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (void *) 0);
 
         //color
         glm::vec2 cube_tex[] = {
@@ -194,7 +181,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, VertexTexBox);
         glBufferData(GL_ARRAY_BUFFER, sizeof(cube_tex), cube_tex, GL_STATIC_DRAW);
         glEnableVertexAttribArray(2);
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, (void *) 0);
 
         glGenBuffers(1, &IndexBufferIDBox);
         //set the current state to focus on our vertex buffer
@@ -208,19 +195,18 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
     }
 
-	/*Note that any gl calls must always happen after a GL state is initialized */
-	void initGeom()
-	{
+    /*Note that any gl calls must always happen after a GL state is initialized */
+    void initGeom() {
         initPlane();
-		glBindVertexArray(0);
+        glBindVertexArray(0);
 
-		string resourceDirectory = "../resources" ;
-		// Initialize mesh.
-		shape = make_shared<Shape>();
-		//shape->loadMesh(resourceDirectory + "/t800.obj");
-		shape->loadMesh(resourceDirectory + "/sphere.obj");
-		shape->resize();
-		shape->init();
+        string resourceDirectory = "../resources";
+        // Initialize mesh.
+        shape = make_shared<Shape>();
+        //shape->loadMesh(resourceDirectory + "/t800.obj");
+        shape->loadMesh(resourceDirectory + "/sphere.obj");
+        shape->resize();
+        shape->init();
 
         worldOBJ = make_shared<Shape>();
         worldOBJ->loadMesh(resourceDirectory + "/world1.0.obj");
@@ -232,36 +218,36 @@ public:
         playerOBJ->resize();
         playerOBJ->init();
 
-		int width, height, channels;
-		char filepath[1000];
+        int width, height, channels;
+        char filepath[1000];
 
-		//texture 1
-		string str = resourceDirectory + "/water.jpeg";
-		strcpy(filepath, str.c_str());
-		unsigned char* data = stbi_load(filepath, &width, &height, &channels, 4);
-		glGenTextures(1, &Texture);
-		//glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
+        //texture 1
+        string str = resourceDirectory + "/water.jpeg";
+        strcpy(filepath, str.c_str());
+        unsigned char *data = stbi_load(filepath, &width, &height, &channels, 4);
+        glGenTextures(1, &Texture);
+        //glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
-		//texture 2
-		str = resourceDirectory + "/night.jpg";
-		strcpy(filepath, str.c_str());
-		data = stbi_load(filepath, &width, &height, &channels, 4);
-		glGenTextures(1, &Texture2);
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, Texture2);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-		glGenerateMipmap(GL_TEXTURE_2D);
+        //texture 2
+        str = resourceDirectory + "/night.jpg";
+        strcpy(filepath, str.c_str());
+        data = stbi_load(filepath, &width, &height, &channels, 4);
+        glGenTextures(1, &Texture2);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, Texture2);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
 
         //texture slime
         str = resourceDirectory + "/slime.jpeg";
@@ -291,62 +277,66 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-		//[TWOTEXTURES]
-		//set the 2 textures to the correct samplers in the fragment shader:
-		GLuint Tex1Location = glGetUniformLocation(prog->pid, "tex");//tex, tex2... sampler in the fragment shader
-		GLuint Tex2Location = glGetUniformLocation(prog->pid, "tex2");
-		// Then bind the uniform samplers to texture units:
-		glUseProgram(prog->pid);
-		glUniform1i(Tex1Location, 0);
-		glUniform1i(Tex2Location, 1);
+        //[TWOTEXTURES]
+        //set the 2 textures to the correct samplers in the fragment shader:
+        GLuint Tex1Location = glGetUniformLocation(prog->pid, "tex");//tex, tex2... sampler in the fragment shader
+        GLuint Tex2Location = glGetUniformLocation(prog->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(prog->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
 
-		Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
-		Tex2Location = glGetUniformLocation(psky->pid, "tex2");
-		// Then bind the uniform samplers to texture units:
-		glUseProgram(psky->pid);
-		glUniform1i(Tex1Location, 0);
-		glUniform1i(Tex2Location, 1);
+        Tex1Location = glGetUniformLocation(pplayer->pid, "tex");//tex, tex2... sampler in the fragment shader
+        Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(pplayer->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
+
+        Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
+        Tex2Location = glGetUniformLocation(psky->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(psky->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
 
         Tex1Location = glGetUniformLocation(pslime->pid, "tex");
         Tex2Location = glGetUniformLocation(pslime->pid, "tex2");
         glUseProgram(pslime->pid);
         glUniform1i(Tex1Location, 2);
         glUniform1i(Tex2Location, 3);
-	}
+    }
 
-	//General OGL initialization - set OGL state here
-	void init(const std::string& resourceDirectory)
-	{
-		GLSL::checkVersion();
+    //General OGL initialization - set OGL state here
+    void init(const std::string &resourceDirectory) {
+        GLSL::checkVersion();
 
-		// Set background color.
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-		// Enable z-buffer test.
-		glEnable(GL_DEPTH_TEST);
+        // Set background color.
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        // Enable z-buffer test.
+        glEnable(GL_DEPTH_TEST);
         glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-		//glDisable(GL_DEPTH_TEST);
-		// Initialize the GLSL program.
-		prog = std::make_shared<Program>();
-		prog->setVerbose(true);
-		prog->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
-		if (!prog->init())
-		{
-			std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-			exit(1);
-		}
-		prog->addUniform("P");
-		prog->addUniform("V");
-		prog->addUniform("M");
-		prog->addUniform("campos");
-		prog->addAttribute("vertPos");
-		prog->addAttribute("vertNor");
-		prog->addAttribute("vertTex");
+        //glDisable(GL_DEPTH_TEST);
+        // Initialize the GLSL program.
+        prog = std::make_shared<Program>();
+        prog->setVerbose(true);
+        prog->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
+        if (!prog->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        prog->addUniform("P");
+        prog->addUniform("V");
+        prog->addUniform("M");
+        prog->addUniform("campos");
+        prog->addAttribute("vertPos");
+        prog->addAttribute("vertNor");
+        prog->addAttribute("vertTex");
 
         pworld = std::make_shared<Program>();
         pworld->setVerbose(true);
         pworld->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
-        if (!pworld->init())
-        {
+        if (!pworld->init()) {
             std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
             exit(1);
         }
@@ -358,29 +348,43 @@ public:
         pworld->addAttribute("vertNor");
         pworld->addAttribute("vertTex");
 
+        pplayer = std::make_shared<Program>();
+        pplayer->setVerbose(true);
+        pplayer->setShaderNames(resourceDirectory + "/shader_vertex_player.glsl",
+                                resourceDirectory + "/shader_fragment_player.glsl");
+        if (!pplayer->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        pplayer->addUniform("P");
+        pplayer->addUniform("V");
+        pplayer->addUniform("M");
+        pplayer->addUniform("campos");
+        pplayer->addAttribute("vertPos");
+        pplayer->addAttribute("vertNor");
+        pplayer->addAttribute("vertTex");
 
-		psky = std::make_shared<Program>();
-		psky->setVerbose(true);
-		psky->setShaderNames(resourceDirectory + "/skyvertex.glsl", resourceDirectory + "/skyfrag.glsl");
-		if (!psky->init())
-		{
-			std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-			exit(1);
-		}
-		psky->addUniform("dn");
-		psky->addUniform("P");
-		psky->addUniform("V");
-		psky->addUniform("M");
-		psky->addUniform("campos");
-		psky->addAttribute("vertPos");
-		psky->addAttribute("vertNor");
-		psky->addAttribute("vertTex");
+
+        psky = std::make_shared<Program>();
+        psky->setVerbose(true);
+        psky->setShaderNames(resourceDirectory + "/skyvertex.glsl", resourceDirectory + "/skyfrag.glsl");
+        if (!psky->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        psky->addUniform("dn");
+        psky->addUniform("P");
+        psky->addUniform("V");
+        psky->addUniform("M");
+        psky->addUniform("campos");
+        psky->addAttribute("vertPos");
+        psky->addAttribute("vertNor");
+        psky->addAttribute("vertTex");
 
         pslime = std::make_shared<Program>();
         pslime->setVerbose(true);
         pslime->setShaderNames(resourceDirectory + "/slimevertex.glsl", resourceDirectory + "/slimefrag.glsl");
-        if (!pslime->init())
-        {
+        if (!pslime->init()) {
             std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
             exit(1);
         }
@@ -395,66 +399,87 @@ public:
 
     }
 
+    /****DRAW
+    This is the most important function in your program - this is where you
+    will actually issue the commands to draw any geometry you have set up to
+    draw
+    ********/
+    void render() {
 
-	/****DRAW
-	This is the most important function in your program - this is where you
-	will actually issue the commands to draw any geometry you have set up to
-	draw
-	********/
-	void render()
-	{
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        double frametime = get_last_elapsed_time();
 
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		double frametime = get_last_elapsed_time();
+        // Get current frame buffer size.
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+        float aspect = width / (float) height;
+        glViewport(0, 0, width, height);
 
-		// Get current frame buffer size.
-		int width, height;
-		glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
-		float aspect = width/(float)height;
-		glViewport(0, 0, width, height);
+        // Clear framebuffer.
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Clear framebuffer.
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glm::mat4 V, M, P; //View, Model and Perspective matrix
+        V = player.camera();
+        P = glm::perspective((float) (3.14159 / 4.), (float) ((float) width / (float) height), 0.1f,
+                             1000.0f); //so much type casting... GLM metods are quite funny ones
 
-		glm::mat4 V, M, P; //View, Model and Perspective matrix
-		V = player.camera();
-		P = glm::perspective((float)(3.14159 / 4.), (float)((float)width/ (float)height), 0.1f, 1000.0f); //so much type casting... GLM metods are quite funny ones
+        pplayer->bind();
+        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
 
-		// Draw the box using GLSL.
-		prog->bind();
+        glBindVertexArray(VertexArrayID);
+        //actually draw from vertex 0, 3 vertices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-		//send the matrices to the shaders
-		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
-	
-		glBindVertexArray(VertexArrayID);
-		//actually draw from vertex 0, 3 vertices
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-		//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-		
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+
+        player.playerRotation();
+        M = player.getModel();
+        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        playerOBJ->draw(pplayer, GL_FALSE);
+
+        pplayer->unbind();
+
+        // Draw the box using GLSL.
+        prog->bind();
+
+        //send the matrices to the shaders
+        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
+
+        glBindVertexArray(VertexArrayID);
+        //actually draw from vertex 0, 3 vertices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
 
         // updating the world and the player
         world.rotateWorld(frametime);
-        player.playerRotation();
+//        player.playerRotation();
 
         M = world.getModel();
 
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         worldOBJ->draw(prog, GL_FALSE);
-
-        M = player.getModel();
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        playerOBJ->draw(prog, GL_FALSE);
+//
+//        M = player.getModel();
+//        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+//        playerOBJ->draw(prog, GL_FALSE);
 
         prog->unbind();
 
         glBindVertexArray(0);
     }
+};
 
 //******************************************************************************************
 int main(int argc, char **argv)
