@@ -21,6 +21,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "collisions.h"
 #include "boundingplane.h"
 #include "world.cpp"
+#include "projectile.cpp"
 
 #include "WindowManager.h"
 #include "Shape.h"
@@ -32,6 +33,7 @@ using namespace glm;
 shared_ptr<Shape> shape;
 shared_ptr<Shape> worldOBJ;
 shared_ptr<Shape> playerOBJ;
+shared_ptr<Shape> projectileOBJ;
 
 
 double get_last_elapsed_time()
@@ -52,7 +54,7 @@ public:
     WindowManager *windowManager = nullptr;
 
     // Our shader program
-    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer;
+    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile;
 
     // Contains vertex information for OpenGL
     GLuint VertexArrayID;
@@ -60,6 +62,7 @@ public:
     // Data necessary to give our box to OpenGL
     GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
+    Projectile projectile;
     Player player;
     World world;
 
@@ -68,6 +71,8 @@ public:
     GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
+
+    float totalTime = 0;
 
     void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
@@ -105,6 +110,16 @@ public:
         if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
             world.d = 0;
             player.d = 0;
+        }
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+            // world.d = 1;
+            // player.d = 1;
+            projectile.shoot = 1;
+        }
+        if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
+            // world.d = 0;
+            // player.d = 0;
+            projectile.shoot = 0;
         }
 
     }
@@ -218,6 +233,11 @@ public:
         playerOBJ->resize();
         playerOBJ->init();
 
+        projectileOBJ = make_shared<Shape>();
+        projectileOBJ->loadMesh(resourceDirectory + "/witch.obj");
+        projectileOBJ->resize();
+        projectileOBJ->init();
+
         int width, height, channels;
         char filepath[1000];
 
@@ -286,10 +306,19 @@ public:
         glUniform1i(Tex1Location, 0);
         glUniform1i(Tex2Location, 1);
 
+        //PLAYER
         Tex1Location = glGetUniformLocation(pplayer->pid, "tex");//tex, tex2... sampler in the fragment shader
         Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
         // Then bind the uniform samplers to texture units:
         glUseProgram(pplayer->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
+
+        //PROJECTILE
+        Tex1Location = glGetUniformLocation(pprojectile->pid, "tex");//tex, tex2... sampler in the fragment shader
+        Tex2Location = glGetUniformLocation(pprojectile->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(pprojectile->pid);
         glUniform1i(Tex1Location, 0);
         glUniform1i(Tex2Location, 1);
 
@@ -364,6 +393,21 @@ public:
         pplayer->addAttribute("vertNor");
         pplayer->addAttribute("vertTex");
 
+        pprojectile = std::make_shared<Program>();
+        pprojectile->setVerbose(true);
+        pprojectile->setShaderNames(resourceDirectory + "/shader_vertex.glsl",
+                                resourceDirectory + "/shader_fragment.glsl");
+        if (!pprojectile->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        pprojectile->addUniform("P");
+        pprojectile->addUniform("V");
+        pprojectile->addUniform("M");
+        pprojectile->addUniform("campos");
+        pprojectile->addAttribute("vertPos");
+        pprojectile->addAttribute("vertNor");
+        pprojectile->addAttribute("vertTex");
 
         psky = std::make_shared<Program>();
         psky->setVerbose(true);
@@ -409,6 +453,7 @@ public:
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         double frametime = get_last_elapsed_time();
+        totalTime += frametime;
 
         // Get current frame buffer size.
         int width, height;
@@ -442,6 +487,13 @@ public:
         M = player.getModel();
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);
+
+
+        projectile.projectileRotation();
+        M = projectile.getModel();
+        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        projectileOBJ->draw(pplayer, GL_FALSE);
+
 
         pplayer->unbind();
 
@@ -495,7 +547,8 @@ int main(int argc, char **argv)
 	/* your main will always include a similar set up to establish your window
 		and GL context, etc. */
 	WindowManager * windowManager = new WindowManager();
-	windowManager->init(1920, 1080);
+	//windowManager->init(1920, 1080);
+    windowManager->init(960, 540);
 	windowManager->setEventCallbacks(application);
 	application->windowManager = windowManager;
 

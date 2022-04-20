@@ -1,9 +1,14 @@
+#include <iostream>
+
 #include "MatrixStack.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
+using namespace std;
+using namespace glm;
 
 #define PLAYERSCALE 0.3f
+#define PI 3.14159265f
 
 class Player
 {
@@ -36,8 +41,9 @@ public:
         else if(s) rotAngle *= 6;
         else if(a) rotAngle *= 4;
         else if(d) rotAngle *= 0;
+        std::cout << "rotAngle: " << rotAngle << "\n";
         rot = rotate(mat4(1), rotAngle - PI / 4, vec3(0, 0, 1));
-
+        
     }
 
     mat4 camera()
