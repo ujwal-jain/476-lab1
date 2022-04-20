@@ -52,7 +52,7 @@ public:
 	WindowManager * windowManager = nullptr;
 
 	// Our shader program
-	std::shared_ptr<Program> prog,psky, pslime, worldprog;
+	std::shared_ptr<Program> prog,psky, pslime, worldprog, playerSHADER;
 
 	// Contains vertex information for OpenGL
 	GLuint VertexArrayID;
@@ -472,6 +472,13 @@ public:
 		glUniform1i(Tex1Location, 0);
 		glUniform1i(Tex2Location, 1);
 
+        Tex1Location = glGetUniformLocation(playerSHADER->pid, "tex");//tex, tex2... sampler in the fragment shader
+        Tex2Location = glGetUniformLocation(playerSHADER->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(playerSHADER->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
+
 		Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
 		Tex2Location = glGetUniformLocation(psky->pid, "tex2");
 		// Then bind the uniform samplers to texture units:
@@ -513,6 +520,22 @@ public:
 		prog->addAttribute("vertPos");
 		prog->addAttribute("vertNor");
 		prog->addAttribute("vertTex");
+
+        playerSHADER = std::make_shared<Program>();
+        playerSHADER->setVerbose(true);
+        playerSHADER->setShaderNames(resourceDirectory + "/shader_vertex_player.glsl", resourceDirectory + "/shader_fragment_player.glsl");
+        if (!playerSHADER->init())
+        {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        playerSHADER->addUniform("P");
+        playerSHADER->addUniform("V");
+        playerSHADER->addUniform("M");
+        playerSHADER->addUniform("campos");
+        playerSHADER->addAttribute("vertPos");
+        playerSHADER->addAttribute("vertNor");
+        playerSHADER->addAttribute("vertTex");
 
         worldprog = std::make_shared<Program>();
         worldprog->setVerbose(true);
@@ -703,6 +726,26 @@ public:
         }
         pslime->unbind();
 
+        playerSHADER->bind();
+        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
+
+        glBindVertexArray(VertexArrayID);
+        //actually draw from vertex 0, 3 vertices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+
+        M = glm::translate(glm::mat4(1.0f), glm::vec3(7.5, 0, 10)) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+        glUniformMatrix4fv(playerSHADER->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        playerOBJ->draw(playerSHADER, GL_FALSE);
+
+        playerSHADER->unbind();
+
 		// Draw the box using GLSL.
 		prog->bind();
 		//send the matrices to the shaders
@@ -732,9 +775,6 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         world->draw(prog, GL_FALSE);
 
-        M = glm::translate(glm::mat4(1.0f), glm::vec3(7.5, 0, 10)) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        playerOBJ->draw(prog, GL_FALSE);
 
         prog->unbind();
 
