@@ -5,7 +5,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include <glad/glad.h>
 #define STB_IMAGE_IMPLEMENTATION
 
-#define PI 3.141596
+#define PI 3.141596f
 #define NUM_SLIMES 20
 #ifndef PLANE_SIZE
 #define PLANE_SIZE 30
@@ -20,6 +20,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "slime.cpp"
 #include "collisions.h"
 #include "boundingplane.h"
+#include "world.cpp"
 
 #include "WindowManager.h"
 #include "Shape.h"
@@ -29,7 +30,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 using namespace std;
 using namespace glm;
 shared_ptr<Shape> shape;
-shared_ptr<Shape> world;
+shared_ptr<Shape> worldOBJ;
 shared_ptr<Shape> playerOBJ;
 
 
@@ -52,7 +53,7 @@ public:
 	WindowManager * windowManager = nullptr;
 
 	// Our shader program
-	std::shared_ptr<Program> prog,psky, pslime, worldprog;
+	std::shared_ptr<Program> prog,psky, pslime, pworld;
 
 	// Contains vertex information for OpenGL
 	GLuint VertexArrayID;
@@ -60,30 +61,17 @@ public:
 	// Data necessary to give our box to OpenGL
 	GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
-    GLuint SlimeArrayId, SlimeBufferId, SlimeNormId, SlimeTexId, SlimeIndexId;
-
     Player player;
+    World world;
 
 	//texture data
-	GLuint Texture, TextureN;
+	GLuint Texture;
 	GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
 
-    int numCollided = 0;
-    boundingplane bpLeft = boundingplane(1.0f, 0.0f, 0.0f, -15.0f);
-    boundingplane bpRight = boundingplane(-1.0f, 0.0f, 0.0f, -15.0f);
-    boundingplane bpTop = boundingplane(0.0f, 0.0f, 1.0f, -15.0f);
-    boundingplane bpDown = boundingplane(0.0f, 0.0f, -1.0f, -15.0f);
-
-    vector<slime> slimes;
-    bool done = false;
-
 	void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods)
 	{
-        if(done) {
-            glfwSetWindowShouldClose(window, GL_TRUE);
-        }
 		if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -91,49 +79,52 @@ public:
 		
 		if (key == GLFW_KEY_W && action == GLFW_PRESS)
 		{
+            world.w = 1;
             player.w = 1;
 		}
 		if (key == GLFW_KEY_W && action == GLFW_RELEASE)
 		{
+            world.w = 0;
             player.w = 0;
 		}
 		if (key == GLFW_KEY_S && action == GLFW_PRESS)
 		{
+            world.s = 1;
             player.s = 1;
 		}
 		if (key == GLFW_KEY_S && action == GLFW_RELEASE)
 		{
+            world.s = 0;
             player.s = 0;
 		}
 		if (key == GLFW_KEY_A && action == GLFW_PRESS)
 		{
+            world.a = 1;
             player.a = 1;
 		}
 		if (key == GLFW_KEY_A && action == GLFW_RELEASE)
 		{
+            world.a = 0;
             player.a = 0;
 		}
 		if (key == GLFW_KEY_D && action == GLFW_PRESS)
 		{
+            world.d = 1;
             player.d = 1;
 		}
 		if (key == GLFW_KEY_D && action == GLFW_RELEASE)
 		{
+            world.d = 0;
             player.d = 0;
 		}
-        if (key == GLFW_KEY_UP && action == GLFW_PRESS) {
-            player.increaseSpeed();
-        }
-        if (key == GLFW_KEY_DOWN && action == GLFW_PRESS) {
-            player.decreaseSpeed();
-        }
+
 	}
 
 	// callback for the mouse when clicked move the triangle when helper functions
 	// written
 	void mouseCallback(GLFWwindow* window, double xpos, double ypos)
 	{
-        player.mouseCallback(window, xpos, ypos);
+
 	}
 
 	//if the window is resized, capture the new size and reset the viewport
@@ -217,173 +208,10 @@ public:
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
     }
 
-    void initSlime() {
-        //generate the VAO
-        glGenVertexArrays(1, &SlimeArrayId);
-        glBindVertexArray(SlimeArrayId);
-
-        //generate vertex buffer to hand off to OGL
-        glGenBuffers(1, &SlimeBufferId);
-        //set the current state to focus on our vertex buffer
-        glBindBuffer(GL_ARRAY_BUFFER, SlimeBufferId);
-
-        GLfloat cube_vertices[] = {
-                // front
-                -1.0, -1.0,  1.0,
-                1.0, -1.0,  1.0,
-                1.0,  1.0,  1.0,
-                -1.0,  1.0,  1.0,
-                // top
-                -1.0, 1.0, 1.0,
-                1.0, 1.0, 1.0,
-                1.0, 1.0, -1.0,
-                -1.0, 1.0, -1.0,
-                // back
-                1.0, -1.0, -1.0,
-                -1.0, -1.0, -1.0,
-                -1.0,  1.0, -1.0,
-                1.0,  1.0, -1.0,
-                // bottom
-                -1.0, -1.0, -1.0,
-                1.0, -1.0, -1.0,
-                1.0, -1.0, 1.0,
-                -1.0, -1.0, 1.0,
-                // left
-                -1.0, -1.0, -1.0,
-                -1.0, -1.0, 1.0,
-                -1.0, 1.0, 1.0,
-                -1.0, 1.0, -1.0,
-                // right
-                1.0, -1.0, 1.0,
-                1.0, -1.0, -1.0,
-                1.0, 1.0, -1.0,
-                1.0, 1.0, 1.0
-        };
-        //make it a bit smaller
-        for (int i = 0; i < 72; i++)
-            cube_vertices[i] *= 0.5;
-        //actually memcopy the data - only do this once
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_DYNAMIC_DRAW);
-
-        //we need to set up the vertex array
-        glEnableVertexAttribArray(3);
-        //key function to get up how many elements to pull out at a time (3)
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        // cube norms
-        GLfloat cube_norm[] = {
-                // front norm
-                0.0, 0.0, 1.0,
-                0.0, 0.0, 1.0,
-                0.0, 0.0, 1.0,
-                0.0, 0.0, 1.0,
-                // top norm
-                0.0, 1.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 1.0, 0.0,
-                0.0, 1.0, 0.0,
-                // back norm
-                0.0, 0.0, -1.0,
-                0.0, 0.0, -1.0,
-                0.0, 0.0, -1.0,
-                0.0, 0.0, -1.0,
-                //bottom norm
-                0.0, -1.0, 0.0,
-                0.0, -1.0, 0.0,
-                0.0, -1.0, 0.0,
-                0.0, -1.0, 0.0,
-                // left norm
-                -1.0, 0.0, 0.0,
-                -1.0, 0.0, 0.0,
-                -1.0, 0.0, 0.0,
-                -1.0, 0.0, 0.0,
-                //right norm
-                1.0, 0.0, 0.0,
-                1.0, 0.0, 0.0,
-                1.0, 0.0, 0.0,
-                1.0, 0.0, 0.0
-        };
-
-        glGenBuffers(1, &SlimeNormId);
-        //set the current state to focus on our vertex buffer
-        glBindBuffer(GL_ARRAY_BUFFER, SlimeNormId);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_norm), cube_norm, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        //tex
-        glm::vec2 cube_tex[] = {
-                // front tex
-                glm::vec2(0.0, 0.0),
-                glm::vec2(1.0, 0.0),
-                glm::vec2(1.0, 1.0),
-                glm::vec2(0.0, 1.0),
-                // top tex
-                glm::vec2(0.0, 0.0),
-                glm::vec2(1.0, 0.0),
-                glm::vec2(1.0, 1.0),
-                glm::vec2(0.0, 1.0),
-                // back tex
-                glm::vec2(1.0, 0.0),
-                glm::vec2(0.0, 0.0),
-                glm::vec2(0.0, 1.0),
-                glm::vec2(1.0, 1.0),
-                // bottom tex
-                glm::vec2(0.0, 0.0),
-                glm::vec2(1.0, 0.0),
-                glm::vec2(1.0, 1.0),
-                glm::vec2(0.0, 1.0),
-                // left tex
-                glm::vec2(0.0, 0.0),
-                glm::vec2(1.0, 0.0),
-                glm::vec2(1.0, 1.0),
-                glm::vec2(0.0, 1.0),
-                // right tex
-                glm::vec2(0.0, 0.0),
-                glm::vec2(1.0, 0.0),
-                glm::vec2(1.0, 1.0),
-                glm::vec2(0.0, 1.0),
-        };
-
-        glGenBuffers(1, &SlimeTexId);
-        //set the current state to focus on our vertex buffer
-        glBindBuffer(GL_ARRAY_BUFFER, SlimeTexId);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(cube_tex), cube_tex, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(5);
-        glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-        glGenBuffers(1, &SlimeIndexId);
-        //set the current state to focus on our vertex buffer
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SlimeIndexId);
-        GLushort cube_elements[] = {
-                // front
-                0, 1, 2,
-                2, 3, 0,
-                // top
-                4, 5, 6,
-                6, 7, 4,
-                // back
-                8, 9, 10,
-                10, 11, 8,
-                // bottom
-                12, 13, 14,
-                14, 15, 12,
-                // left
-                16, 17, 18,
-                18, 19, 16,
-                // right
-                20, 21, 22,
-                22, 23, 20,
-        };
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(cube_elements), cube_elements, GL_STATIC_DRAW);
-        glBindVertexArray(0);
-    }
-
 	/*Note that any gl calls must always happen after a GL state is initialized */
 	void initGeom()
 	{
         initPlane();
-        initSlime();
 		glBindVertexArray(0);
 
 		string resourceDirectory = "../resources" ;
@@ -394,10 +222,10 @@ public:
 		shape->resize();
 		shape->init();
 
-        world = make_shared<Shape>();
-        world->loadMesh(resourceDirectory + "/world1.0.obj");
-        world->resize();
-        world->init();
+        worldOBJ = make_shared<Shape>();
+        worldOBJ->loadMesh(resourceDirectory + "/world1.0.obj");
+        worldOBJ->resize();
+        worldOBJ->init();
 
         playerOBJ = make_shared<Shape>();
         playerOBJ->loadMesh(resourceDirectory + "/witch.obj");
@@ -514,21 +342,21 @@ public:
 		prog->addAttribute("vertNor");
 		prog->addAttribute("vertTex");
 
-        worldprog = std::make_shared<Program>();
-        worldprog->setVerbose(true);
-        worldprog->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
-        if (!worldprog->init())
+        pworld = std::make_shared<Program>();
+        pworld->setVerbose(true);
+        pworld->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
+        if (!pworld->init())
         {
             std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
             exit(1);
         }
-        worldprog->addUniform("P");
-        worldprog->addUniform("V");
-        worldprog->addUniform("M");
-        worldprog->addUniform("campos");
-        worldprog->addAttribute("vertPos");
-        worldprog->addAttribute("vertNor");
-        worldprog->addAttribute("vertTex");
+        pworld->addUniform("P");
+        pworld->addUniform("V");
+        pworld->addUniform("M");
+        pworld->addUniform("campos");
+        pworld->addAttribute("vertPos");
+        pworld->addAttribute("vertNor");
+        pworld->addAttribute("vertTex");
 
 
 		psky = std::make_shared<Program>();
@@ -565,15 +393,6 @@ public:
         pslime->addUniform("part");
         pslime->addUniform("hit");
 
-
-        // Initialize the slimes!!
-        slimes = vector<slime>();
-        for (int i = 0; i < NUM_SLIMES; i++) {
-            slimes.emplace_back();
-        }
-        numCollided = 0;
-        cout << "Remaining slimes: " << slimes.size() << endl;
-        cout << "Collided with " << numCollided << " slimes" << endl;
     }
 
 
@@ -598,113 +417,13 @@ public:
 		// Clear framebuffer.
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Create the matrix stacks - please leave these alone for now
-
-		static float playerX = 0.0;
-		static float playerY = 0;
-		static float playerZ = 0;
-
 		glm::mat4 V, M, P; //View, Model and Perspective matrix
-		V = player.process(frametime);
-		M = glm::mat4(1);
+		V = player.camera();
 		P = glm::perspective((float)(3.14159 / 4.), (float)((float)width/ (float)height), 0.1f, 1000.0f); //so much type casting... GLM metods are quite funny ones
-		
-		float sangle = 3.1415926 / 2.;
-		glm::mat4 RotateXSky = glm::rotate(glm::mat4(1.0f), sangle, glm::vec3(1.0f, 0.0f, 0.0f));
-		glm::vec3 camp = player.cameraPos;
-		glm::mat4 TransSky = glm::translate(glm::mat4(1.0f), camp);
-		glm::mat4 SSky = glm::scale(glm::mat4(1.0f), glm::vec3(0.8f, 0.8f, 0.8f));
-
-		M = TransSky * RotateXSky * SSky;
-
-		psky->bind();
-		glUniformMatrix4fv(psky->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-		glUniformMatrix4fv(psky->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-		glUniformMatrix4fv(psky->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		glUniform3fv(psky->getUniform("campos"), 1, &player.pos[0]);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, Texture2);
-
-		static float ttime = 0;
-		ttime += frametime;
-		float dn = sin(ttime)*0.5 +0.5;
-		glUniform1f(psky->getUniform("dn"), dn);		
-		glDisable(GL_DEPTH_TEST);
-		//shape->draw(psky, GL_FALSE);
-		glEnable(GL_DEPTH_TEST);
-		psky->unbind();
-
-
-		glm::mat4 RotateX;
-		glm::mat4 TransZ;
-		glm::mat4 S;
-
-        pslime->bind();
-        glBindVertexArray(SlimeArrayId);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SlimeIndexId);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, TextureSlime);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, TextureSlime2);
-
-        glUniformMatrix4fv(pslime->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        glUniformMatrix4fv(pslime->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-
-        vector<int> delIndices = vector<int>();
-        // update the slime, then draw it
-        for(int i = 0; i < slimes.size(); i++) {
-           slimes[i].update(frametime);
-           // if the slime is dead, add it to the list of indices to delete
-           //if(drawSlime(&slimes[i])) {
-               //delIndices.push_back(i);
-           //}
-        }
-        for(int i = delIndices.size() - 1; i >= 0; i--) {
-            slimes.erase(slimes.begin() + delIndices[i]);
-            cout << "Remaining slimes: " << slimes.size() << endl;
-            if(slimes.size() == 0) {
-                cout << "You win!" << endl;
-                done = true;
-            }
-        }
-
-        for(int i = 0; i < slimes.size(); i++) {
-            if(collisions::detectSphereSphere(slimes[i].sphere, player.sphere) && slimes[i].timeLeft == 0) {
-                numCollided += 1;
-                cout << "Collided with " << numCollided << " slimes" << endl;
-                slimes[i].startTimer();
-            }
-
-
-
-            if(collisions::detectPlaneSphere(bpLeft, slimes[i].sphere)) {
-                slimes[i].dir.x = -abs(slimes[i].dir.x);
-            } else if(collisions::detectPlaneSphere(bpRight, slimes[i].sphere)) {
-                slimes[i].dir.x = abs(slimes[i].dir.x);
-            } else if(collisions::detectPlaneSphere(bpDown, slimes[i].sphere)) {
-                slimes[i].dir.y = abs(slimes[i].dir.y);
-            } else if(collisions::detectPlaneSphere(bpTop, slimes[i].sphere)) {
-                slimes[i].dir.y = -abs(slimes[i].dir.y);
-            }
-        }
-
-        for(int i = 0; i < slimes.size(); i++) {
-            for (int j = i + 1; j < slimes.size(); j++) {
-                if(collisions::detectSphereSphere(slimes[j].sphere, slimes[i].sphere)) {
-                    vec2 dir = slimes[j].dir + slimes[i].dir;
-                    if(dir.x == 0 && dir.y == 0) {
-                        continue;
-                    }
-                    dir = normalize(dir);
-                    slimes[i].dir = -dir;
-                    slimes[j].dir = dir;
-                }
-            }
-        }
-        pslime->unbind();
 
 		// Draw the box using GLSL.
 		prog->bind();
+
 		//send the matrices to the shaders
 		glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
 		glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -718,21 +437,17 @@ public:
 		
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, Texture);
-		
-		TransZ = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, -1.3f, 0.0));
-		S = glm::scale(glm::mat4(1.0f), glm::vec3(PLANE_SIZE, PLANE_SIZE, 0.f));
-		float angle = 3.1415926 / 2.0f;
-        RotateX = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1.0f, 0.0f, 0.0f));
 
-		M = TransZ *  RotateX * S;
-		glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void*)0);
+        // updating the world and the player
+        world.rotateWorld(frametime);
+        player.playerRotation();
 
-        M = glm::scale(glm::mat4(1.0f), glm::vec3(15, 15, 15));
+        M = world.getModel();
+
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        world->draw(prog, GL_FALSE);
+        worldOBJ->draw(prog, GL_FALSE);
 
-        M = glm::translate(glm::mat4(1.0f), glm::vec3(7.5, 0, 10)) * glm::rotate(glm::mat4(1.0f), glm::radians(90.0f),glm::vec3(1, 0, 0)) * glm::scale(glm::mat4(1.0f), glm::vec3(0.1, 0.1, 0.1));
+        M = player.getModel();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE);
 
@@ -741,39 +456,6 @@ public:
         glBindVertexArray(0);
     }
 
-    bool drawSlime(slime *s) {
-        glUniform1i(pslime->getUniform("hit"), s->timeLeft != 0);
-        mat4 M_body = s->getBody();
-        mat4 M = M_body;
-        glUniform1i(pslime->getUniform("part"), 0);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        // draw the left eye
-        M = s->getLeftEye();
-        glUniform1i(pslime->getUniform("part"), 1);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        M = s->getRightEye();
-        glUniform1i(pslime->getUniform("part"), 1);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        M = s->getSmile();
-        glUniform1i(pslime->getUniform("part"), 2);
-        glUniformMatrix4fv(pslime->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-        if(s->timeLeft == 0) {
-            return false;
-        }
-        else if(s->timeLeft < 1.0f) {
-            return true;
-        }
-
-        return false;
-    }
-};
 //******************************************************************************************
 int main(int argc, char **argv)
 {
