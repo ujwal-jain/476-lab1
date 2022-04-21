@@ -12,18 +12,23 @@ using namespace glm;
 #define PI 3.14159265f
 #endif
 
+#ifndef PROJECTILE
+#include "projectile.cpp"
+#endif
+
 class Player
 {
 public:
-    int w, a, s, d;
+    int w, a, s, d, space;
     vec3 pos;
+    vec3 dir;
     mat4 rot;
 
     Player()
     {
         pos = vec3(0, 0, 20);
         rot = mat4(1);
-        w = a = s = d = 0;
+        w = a = s = d = space = 0;
     }
 
     mat4 getModel() const {
@@ -40,14 +45,16 @@ public:
         float xposFloat = static_cast<float>(xpos);
         float yposFloat = static_cast<float>(ypos);
 
-        vec2 cursor = normalize(vec2(xposFloat - (width / 2), -(yposFloat - (height / 2))));
-
-        printf("%f %f\n", cursor.x, cursor.y);
-        rot = rotate(mat4(1), atan(cursor.y, cursor.x) - PI/4.0f, vec3(0, 0, 1));
+        dir = vec3(normalize(vec2(xposFloat - (width / 2), -(yposFloat - (height / 2)))), 0);
+        rot = rotate(mat4(1), atan(dir.y, dir.x) - PI/4.0f, vec3(0, 0, 1));
     }
 
     mat4 camera()
     {
         return translate(mat4(1), vec3(0, 0, -40));
+    }
+
+    Projectile spawnProjectile() {
+        return Projectile(pos, dir);
     }
 };

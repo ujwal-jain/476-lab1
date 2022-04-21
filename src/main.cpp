@@ -113,13 +113,11 @@ public:
             player.d = 0;
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-            // world.d = 1;
-            // player.d = 1;
+            projectiles.push_back(player.spawnProjectile());
+            player.space = 1;
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
-            // world.d = 0;
-            // player.d = 0;
-
+            player.space = 0;
         }
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -448,9 +446,9 @@ public:
         pslime->addUniform("hit");
 
         // initialize test projectile
-        for(int i = 0; i < NUM_PROJECTILES; i++) {
-            projectiles.emplace_back(player.pos);
-        }
+//        for(int i = 0; i < NUM_PROJECTILES; i++) {
+//            projectiles.emplace_back(player.pos);
+//        }
     }
 
     /****DRAW
@@ -498,13 +496,15 @@ public:
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);
 
-        for(int i = 0; i < NUM_PROJECTILES; i++) {
-            projectiles[i].rotateProj(frametime);
-            M = projectiles[i].getModel();
-            glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-            projectileOBJ->draw(pplayer, GL_FALSE);
-        }
 
+        for(int i = 0; i < projectiles.size(); i++) {
+            if (projectiles[i].lifespan > 0) {
+                projectiles[i].rotateProj(frametime);
+                M = projectiles[i].getModel();
+                glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+                projectileOBJ->draw(pplayer, GL_FALSE);
+            } else projectiles.erase(projectiles.begin() + i);
+        }
 
         pplayer->unbind();
 

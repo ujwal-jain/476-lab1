@@ -8,6 +8,9 @@
 #define PROJRADIUS 1.0f
 #define PROJSCALE 0.1f
 
+#ifndef PROJECTILE
+#define PROJECTILE
+
 using namespace std;
 using namespace glm;
 
@@ -20,6 +23,7 @@ public:
     mat4 rot;
     vec3 rotAxis;
     boundingsphere sphere;
+    float lifespan;
     int shoot;
 
     Projectile() {
@@ -42,28 +46,19 @@ public:
         rotAxis = vec3(0, 1, 0);
 
         sphere = boundingsphere(pos, PROJRADIUS);
+        lifespan = 10;
     }
 
-    Projectile(vec3 targetLocation)
+    Projectile(vec3 pos, vec3 dir)
     {
-        // Some quick math to generate a random initial position of a projectile
-        // Initialize position of the projectile to be anywhere on the sphere
-        float x = (rand() % (int)(PROJSPAWNRADIUS * 20)) / 10.0f - PROJSPAWNRADIUS;
-        // x^2 + y^2 + z^2 = r^2
-        // if x is known, y^2 + z^2 = r^2 - x^2
-        // generate y in range -sqrt(r^2 - x^2) to sqrt(r^2 - x^2)
-        float maxy = sqrt(PROJSPAWNRADIUS2 - x*x);
-        float y = (rand() % (int)(maxy * 20)) / 10.0f - maxy;
-        // z = sqrt(r^2 - x^2 - y^2)
-        float z = sqrt(PROJSPAWNRADIUS2 - x*x - y*y);
-
-        pos = vec3(x, y, z);
+        this->pos = pos;
         rot = mat4(1);
         w = a = s = d = 0;
         shoot = 0;
 
-        rotAxis = cross(pos, targetLocation - pos);
+        rotAxis = cross(pos, dir);
         sphere = boundingsphere(pos, PROJRADIUS);
+        lifespan = 10;
     }
 
     mat4 getModel() const {
@@ -78,5 +73,11 @@ public:
 //        vec4 realRotAxis = vec4(rotAxis, 1) * worldRotation;
 //        rot *= rotate(mat4(1), frametime, vec3(realRotAxis));
         rot *= rotate(mat4(1), frametime, rotAxis);
+        detoriateProjectile();
+    }
+
+    void detoriateProjectile() {
+        lifespan -= 0.5;
     }
 };
+#endif
