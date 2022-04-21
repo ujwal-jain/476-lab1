@@ -62,7 +62,7 @@ public:
     // Data necessary to give our box to OpenGL
     GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
-    Projectile projectile;
+    Projectile projectile[10];
     Player player;
     World world;
 
@@ -82,45 +82,80 @@ public:
         if (key == GLFW_KEY_W && action == GLFW_PRESS) {
             world.w = 1;
             player.w = 1;
+            for(int i = 0; i < 10; i++){
+                projectile[i].w = 1;
+            }
+            
         }
         if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
             world.w = 0;
             player.w = 0;
+            for(int i = 0; i < 10; i++){
+                projectile[i].w = 0;
+            }
         }
         if (key == GLFW_KEY_S && action == GLFW_PRESS) {
             world.s = 1;
             player.s = 1;
+            for(int i = 0; i < 10; i++){
+                projectile[i].s = 1;
+            }
         }
         if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
             world.s = 0;
             player.s = 0;
+            for(int i = 0; i < 10; i++){
+                projectile[i].s = 0;
+            }
         }
         if (key == GLFW_KEY_A && action == GLFW_PRESS) {
             world.a = 1;
             player.a = 1;
+            for(int i = 0; i < 10; i++){
+                projectile[i].a= 1;
+            }
         }
         if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
             world.a = 0;
             player.a = 0;
+            for(int i = 0; i < 10; i++){
+                projectile[i].a = 0;
+            }
         }
         if (key == GLFW_KEY_D && action == GLFW_PRESS) {
             world.d = 1;
             player.d = 1;
+            for(int i = 0; i < 10; i++){
+                projectile[i].d = 1;
+            }
         }
         if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
             world.d = 0;
             player.d = 0;
+            for(int i = 0; i < 10; i++){
+                projectile[i].d = 0;
+            }
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
             // world.d = 1;
             // player.d = 1;
-            projectile.shoot = 1;
+            for(int i = 0; i < 10; i++){
+                projectile[i].shoot = 1;
+            }
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             // world.d = 0;
             // player.d = 0;
-            projectile.shoot = 0;
+            for(int i = 0; i < 10; i++){
+                projectile[i].shoot = 1;
+            }
         }
+        if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
+			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+		}
+		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
+			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
+		}
 
     }
 
@@ -234,7 +269,7 @@ public:
         playerOBJ->init();
 
         projectileOBJ = make_shared<Shape>();
-        projectileOBJ->loadMesh(resourceDirectory + "/witch.obj");
+        projectileOBJ->loadMesh(resourceDirectory + "/sphere.obj");
         projectileOBJ->resize();
         projectileOBJ->init();
 
@@ -489,8 +524,18 @@ public:
         playerOBJ->draw(pplayer, GL_FALSE);
 
 
-        projectile.projectileRotation();
-        M = projectile.getModel();
+        projectile[0].rotateWorld(frametime);
+        M = projectile[0].getModel(totalTime);
+        
+        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        projectileOBJ->draw(pplayer, GL_FALSE);
+
+        // Projectile projectile1 = Projectile();
+        // projectile[1] = projectile1;
+
+        projectile[1].rotateWorld(frametime);
+        M = projectile[1].getModel(totalTime);
+        
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         projectileOBJ->draw(pplayer, GL_FALSE);
 

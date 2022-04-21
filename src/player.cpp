@@ -47,6 +47,6 @@ public:
 
     mat4 camera()
     {
-        return translate(mat4(1), vec3(0, 0, -30));
+        return translate(mat4(1), vec3(0, 0, -40));
     }
 };
