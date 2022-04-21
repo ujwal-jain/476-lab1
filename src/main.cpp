@@ -133,7 +133,7 @@ public:
     // callback for the mouse when clicked move the triangle when helper functions
     // written
     void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
-
+       player.playerRotation(window, xpos, ypos);
     }
 
     //if the window is resized, capture the new size and reset the viewport
@@ -350,7 +350,7 @@ public:
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         // Enable z-buffer test.
         glEnable(GL_DEPTH_TEST);
-        glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        //glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         //glDisable(GL_DEPTH_TEST);
         // Initialize the GLSL program.
         prog = std::make_shared<Program>();
@@ -493,7 +493,7 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
 
-        player.playerRotation();
+        //player.playerRotation();
         M = player.getModel();
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);

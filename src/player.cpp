@@ -18,6 +18,7 @@ public:
     int w, a, s, d;
     vec3 pos;
     mat4 rot;
+
     Player()
     {
         pos = vec3(0, 0, 20);
@@ -32,19 +33,17 @@ public:
                * scale(mat4(1), vec3(PLAYERSCALE));
     }
 
-    void playerRotation() {
-        if(!w && !a && !s && !d) return;
-        float rotAngle = PI/4.0f;
-        if(w && a) rotAngle *= 3;
-        else if(w && d) rotAngle *= 1;
-        else if(s && a) rotAngle *= 5;
-        else if(s && d) rotAngle *= 7;
-        else if(w) rotAngle *= 2;
-        else if(s) rotAngle *= 6;
-        else if(a) rotAngle *= 4;
-        else if(d) rotAngle *= 0;
-        rot = rotate(mat4(1), rotAngle - PI / 4, vec3(0, 0, 1));
+    void playerRotation(GLFWwindow *window, double xpos, double ypos) {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
 
+        float xposFloat = static_cast<float>(xpos);
+        float yposFloat = static_cast<float>(ypos);
+
+        vec2 cursor = normalize(vec2(xposFloat - (width / 2), -(yposFloat - (height / 2))));
+
+        printf("%f %f\n", cursor.x, cursor.y);
+        rot = rotate(mat4(1), atan(cursor.y, cursor.x) - PI/4.0f, vec3(0, 0, 1));
     }
 
     mat4 camera()
