@@ -11,8 +11,9 @@
 using namespace glm;
 
 class World {
-    mat4 rotation;
+
 public:
+    mat4 rotation;
     int w, a, s, d;
     World() {
         w = a = s = d = 0;

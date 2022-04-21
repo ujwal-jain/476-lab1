@@ -3,8 +3,10 @@
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
 
-#define WORLDROTSPEED 1.f
-#define WORLDSCALE 15
+#define PROJSPAWNRADIUS 16.0f
+#define PROJSPAWNRADIUS2 (PROJSPAWNRADIUS*PROJSPAWNRADIUS)
+#define PROJRADIUS 1.0f
+#define PROJSCALE 0.1f
 
 using namespace std;
 using namespace glm;
@@ -14,78 +16,67 @@ class Projectile
 {
 public:
     int w, a, s, d;
-    int shoot;
     vec3 pos;
     mat4 rot;
-    mat4 worldRot;
+    vec3 rotAxis;
+    boundingsphere sphere;
+    int shoot;
 
-    Projectile()
-    {
-        pos = vec3(-1 + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(2))), 0, 20);
+    Projectile() {
+        // Some quick math to generate a random initial position of a projectile
+        // Initialize position of the projectile to be anywhere on the sphere
+        float x = (rand() % (int)(PROJSPAWNRADIUS * 20)) / 10.0f - PROJSPAWNRADIUS;
+        // x^2 + y^2 + z^2 = r^2
+        // if x is known, y^2 + z^2 = r^2 - x^2
+        // generate y in range -sqrt(r^2 - x^2) to sqrt(r^2 - x^2)
+        float maxy = sqrt(PROJSPAWNRADIUS2 - x*x);
+        float y = (rand() % (int)(maxy * 20)) / 10.0f - maxy;
+        // z = sqrt(r^2 - x^2 - y^2)
+        float z = sqrt(PROJSPAWNRADIUS2 - x*x - y*y);
+
+        pos = vec3(x, y, z);
         rot = mat4(1);
-        worldRot = mat4(1);
         w = a = s = d = 0;
-        
         shoot = 0;
+
+        rotAxis = vec3(0, 1, 0);
+
+        sphere = boundingsphere(pos, PROJRADIUS);
     }
 
-    mat4 getModel(float ttime) const {
-        return 
-            worldRot
-            * rotate(mat4(1.0f), radians(ttime * 20), vec3(1, 0, 0))
-            * translate(mat4(1), pos)
-            * scale(mat4(1), vec3(PLAYERSCALE));
+    Projectile(vec3 targetLocation)
+    {
+        // Some quick math to generate a random initial position of a projectile
+        // Initialize position of the projectile to be anywhere on the sphere
+        float x = (rand() % (int)(PROJSPAWNRADIUS * 20)) / 10.0f - PROJSPAWNRADIUS;
+        // x^2 + y^2 + z^2 = r^2
+        // if x is known, y^2 + z^2 = r^2 - x^2
+        // generate y in range -sqrt(r^2 - x^2) to sqrt(r^2 - x^2)
+        float maxy = sqrt(PROJSPAWNRADIUS2 - x*x);
+        float y = (rand() % (int)(maxy * 20)) / 10.0f - maxy;
+        // z = sqrt(r^2 - x^2 - y^2)
+        float z = sqrt(PROJSPAWNRADIUS2 - x*x - y*y);
+
+        pos = vec3(x, y, z);
+        rot = mat4(1);
+        w = a = s = d = 0;
+        shoot = 0;
+
+        rotAxis = cross(pos, targetLocation - pos);
+        sphere = boundingsphere(pos, PROJRADIUS);
     }
 
-    void playerRotation() {
-        if(!w && !a && !s && !d) return;
-        float rotAngle = PI/4.0f;
-        if(w && a) rotAngle *= 3;
-        else if(w && d) rotAngle *= 1;
-        else if(s && a) rotAngle *= 5;
-        else if(s && d) rotAngle *= 7;
-        else if(w) rotAngle *= 2;
-        else if(s) rotAngle *= 6;
-        else if(a) rotAngle *= 4;
-        else if(d) rotAngle *= 0;
-        rot = rotate(mat4(1), rotAngle - PI / 4, vec3(0, 0, 1));
+    mat4 getModel() const {
+        return
+                (rot
+            * translate(mat4(1), pos))
+            * scale(mat4(1), vec3(PROJSCALE));
     }
 
-    void rotateWorld(float ftime) {
-        if(w) {
-            if (d) rotateXY1(ftime * WORLDROTSPEED);
-            else if (a) rotateXY2(ftime * WORLDROTSPEED);
-            else rotateX(ftime * WORLDROTSPEED);
-        }
-        else if(s) {
-            if(a) rotateXY1(-ftime * WORLDROTSPEED);
-            else if(d) rotateXY2(-ftime * WORLDROTSPEED);
-            else rotateX(-ftime * WORLDROTSPEED);
-        }
-        else if(a) rotateY(ftime * WORLDROTSPEED);
-        else if(d) rotateY(-ftime * WORLDROTSPEED);
+    void rotateProj(float frametime) {
+        // Since the world has a separate rotation, we need to rotate the rotAxis by the world rotation
+//        vec4 realRotAxis = vec4(rotAxis, 1) * worldRotation;
+//        rot *= rotate(mat4(1), frametime, vec3(realRotAxis));
+        rot *= rotate(mat4(1), frametime, rotAxis);
     }
-
-private:
-
-    // if user presses w or s, rotate world over x axis
-    void rotateX(float angle) {
-        worldRot = rotate(mat4(1), angle, vec3(1, 0, 0)) * worldRot;
-    }
-
-    // if user pressed a or d, rotate world over y axis
-    void rotateY(float angle) {
-        worldRot = rotate(mat4(1), angle, vec3(0, 1, 0)) * worldRot;
-    }
-
-    // if user presses w and d or s and a, rotate the world over <1,1,0>
-    void rotateXY1(float angle) {
-        worldRot = rotate(mat4(1), angle, vec3(1, -1, 0)) * worldRot;
-    }
-
-    // if user presses w and a or s and d, rotate the world over <1,-1,0>
-    void rotateXY2(float angle) {
-        worldRot = rotate(mat4(1), angle, vec3(1, 1, 0)) * worldRot;
-    }
-    
 };

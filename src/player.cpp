@@ -8,7 +8,9 @@ using namespace std;
 using namespace glm;
 
 #define PLAYERSCALE 0.3f
+#ifndef PI
 #define PI 3.14159265f
+#endif
 
 class Player
 {
@@ -42,7 +44,7 @@ public:
         else if(a) rotAngle *= 4;
         else if(d) rotAngle *= 0;
         rot = rotate(mat4(1), rotAngle - PI / 4, vec3(0, 0, 1));
-        
+
     }
 
     mat4 camera()

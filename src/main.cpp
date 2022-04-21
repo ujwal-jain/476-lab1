@@ -11,6 +11,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #define PLANE_SIZE 30
 #define HPL_SIZE (PLANE_SIZE / 2.f)
 #endif
+#define NUM_PROJECTILES 5
 
 #include "stb_image.h"
 #include "GLSL.h"
@@ -62,7 +63,7 @@ public:
     // Data necessary to give our box to OpenGL
     GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
-    Projectile projectile[10];
+    vector<Projectile> projectiles;
     Player player;
     World world;
 
@@ -82,73 +83,43 @@ public:
         if (key == GLFW_KEY_W && action == GLFW_PRESS) {
             world.w = 1;
             player.w = 1;
-            for(int i = 0; i < 10; i++){
-                projectile[i].w = 1;
-            }
-            
         }
         if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
             world.w = 0;
             player.w = 0;
-            for(int i = 0; i < 10; i++){
-                projectile[i].w = 0;
-            }
         }
         if (key == GLFW_KEY_S && action == GLFW_PRESS) {
             world.s = 1;
             player.s = 1;
-            for(int i = 0; i < 10; i++){
-                projectile[i].s = 1;
-            }
         }
         if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
             world.s = 0;
             player.s = 0;
-            for(int i = 0; i < 10; i++){
-                projectile[i].s = 0;
-            }
         }
         if (key == GLFW_KEY_A && action == GLFW_PRESS) {
             world.a = 1;
             player.a = 1;
-            for(int i = 0; i < 10; i++){
-                projectile[i].a= 1;
-            }
         }
         if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
             world.a = 0;
             player.a = 0;
-            for(int i = 0; i < 10; i++){
-                projectile[i].a = 0;
-            }
         }
         if (key == GLFW_KEY_D && action == GLFW_PRESS) {
             world.d = 1;
             player.d = 1;
-            for(int i = 0; i < 10; i++){
-                projectile[i].d = 1;
-            }
         }
         if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
             world.d = 0;
             player.d = 0;
-            for(int i = 0; i < 10; i++){
-                projectile[i].d = 0;
-            }
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
             // world.d = 1;
             // player.d = 1;
-            for(int i = 0; i < 10; i++){
-                projectile[i].shoot = 1;
-            }
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             // world.d = 0;
             // player.d = 0;
-            for(int i = 0; i < 10; i++){
-                projectile[i].shoot = 1;
-            }
+
         }
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -476,6 +447,10 @@ public:
         pslime->addUniform("part");
         pslime->addUniform("hit");
 
+        // initialize test projectile
+        for(int i = 0; i < NUM_PROJECTILES; i++) {
+            projectiles.emplace_back(player.pos);
+        }
     }
 
     /****DRAW
@@ -523,21 +498,12 @@ public:
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);
 
-
-        projectile[0].rotateWorld(frametime);
-        M = projectile[0].getModel(totalTime);
-        
-        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        projectileOBJ->draw(pplayer, GL_FALSE);
-
-        // Projectile projectile1 = Projectile();
-        // projectile[1] = projectile1;
-
-        projectile[1].rotateWorld(frametime);
-        M = projectile[1].getModel(totalTime);
-        
-        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        projectileOBJ->draw(pplayer, GL_FALSE);
+        for(int i = 0; i < NUM_PROJECTILES; i++) {
+            projectiles[i].rotateProj(frametime);
+            M = projectiles[i].getModel();
+            glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+            projectileOBJ->draw(pplayer, GL_FALSE);
+        }
 
 
         pplayer->unbind();
@@ -581,6 +547,7 @@ public:
 //******************************************************************************************
 int main(int argc, char **argv)
 {
+    srand(time(NULL));
 	std::string resourceDir = "../resources"; // Where the resources are loaded from
 	if (argc >= 2)
 	{
