@@ -11,26 +11,31 @@ float getdiff(vec3 lp) {
     vec3 n = normalize(vertex_normal);
     vec3 ld = vec3(lp-vertex_pos);
     float diff = dot(n, ld);
-    return clamp(diff, 0.3, 1.0);
+    diff = clamp(diff, 0.5, 1.0);
+//    diff = pow(diff, 30.0);
+    return diff;
+//    return clamp(diff, 0.3, 1.0);
 }
 
 void main()
 {
-    vec4 tcol = texture(tex, vertex_tex*10.);
+    vec4 tcol = texture(tex, vertex_tex);
     color = tcol;
-    color *= 0.3;
-    color.a = 1;
-    color = vec4(1, 1, 1, 1);
+//    color = vec4(1, 0, 1, 1);
 
-    float fraction = 1.0f;
-    float diff = getdiff(vec3(100, 100, 100));
-
-    if(diff < pow(0.75, fraction)) {
-        color = color;
-    } else if(diff < pow(0.5, fraction)) {
-        color.xyz = 0.5 * color.xyz;
-    } else {
-        color.xyz = 0.25 * color.xyz;
-    }
-    color.xyz *= diff;
+//    float diff = getdiff(vec3(50, 50, 50));
+//    int tune = int (diff*10.0);
+//    if(diff < pow(0.75, fraction)) {
+//        color = color;
+//    } else if(diff < pow(0.5, fraction)) {
+//        color.xyz = 0.5 * color.xyz;
+//    } else {
+//        color.xyz = 0.25 * color.xyz;
+//    }
+//    if(diff < 0.5) {
+//        color.xyz = 0.5 * color.xyz;
+//    } else {
+//        color.xyz = 0.25 * color.xyz;
+//    }
+//    color.xyz *= (tune/10.0);
 }

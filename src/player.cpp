@@ -25,9 +25,9 @@ public:
 
     mat4 getModel() const {
         return translate(mat4(1), pos)
-            * rot
-            * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
-            * scale(mat4(1), vec3(PLAYERSCALE));
+               * rot
+               * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+               * scale(mat4(1), vec3(PLAYERSCALE));
     }
 
     void playerRotation() {
@@ -41,7 +41,6 @@ public:
         else if(s) rotAngle *= 6;
         else if(a) rotAngle *= 4;
         else if(d) rotAngle *= 0;
-        std::cout << "rotAngle: " << rotAngle << "\n";
         rot = rotate(mat4(1), rotAngle - PI / 4, vec3(0, 0, 1));
         
     }
