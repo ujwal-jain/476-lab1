@@ -7,7 +7,7 @@
 using namespace std;
 using namespace glm;
 
-#define PLAYERSCALE 0.3f
+#define PLAYERSCALE 0.7f
 #ifndef PI
 #define PI 3.14159265f
 #endif

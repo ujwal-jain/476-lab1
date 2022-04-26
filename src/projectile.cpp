@@ -58,7 +58,7 @@ public:
 
         rotAxis = cross(pos, dir);
         sphere = boundingsphere(pos, PROJRADIUS);
-        lifespan = 10;
+        lifespan = 60;
     }
 
     mat4 getModel() const {
@@ -77,7 +77,7 @@ public:
     }
 
     void detoriateProjectile() {
-        lifespan -= 0.5;
+        //lifespan -= 0.5;
     }
 };
 #endif

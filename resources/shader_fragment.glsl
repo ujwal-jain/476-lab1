@@ -21,10 +21,10 @@ void main()
 {
     vec4 tcol = texture(tex, vertex_tex);
     color = tcol;
-//    color = vec4(1, 0, 1, 1);
+    color = vec4(1, 0, 1, 1);
 
-//    float diff = getdiff(vec3(50, 50, 50));
-//    int tune = int (diff*10.0);
+    float diff = getdiff(vec3(50, 50, 50));
+    int tune = int (diff*10.0);
 //    if(diff < pow(0.75, fraction)) {
 //        color = color;
 //    } else if(diff < pow(0.5, fraction)) {
@@ -37,5 +37,5 @@ void main()
 //    } else {
 //        color.xyz = 0.25 * color.xyz;
 //    }
-//    color.xyz *= (tune/10.0);
+    color.xyz *= (tune/10.0);
 }
