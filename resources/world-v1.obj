@@ -1,6 +1,6 @@
 # Blender 3.1.2
 # www.blender.org
-mtllib world.mtl
+mtllib world-v1.mtl
 o Icosphere
 v 0.000000 -6.732923 0.000000
 v 4.871992 -3.011095 3.539668

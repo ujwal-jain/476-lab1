@@ -231,7 +231,7 @@ public:
         shape->init();
 
         worldOBJ = make_shared<Shape>();
-        worldOBJ->loadMesh(resourceDirectory + "/world1.obj");
+        worldOBJ->loadMesh(resourceDirectory + "/world-v1.obj");
         worldOBJ->resize();
         worldOBJ->init();
 
