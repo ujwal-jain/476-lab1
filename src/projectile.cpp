@@ -6,7 +6,8 @@
 #define PROJSPAWNRADIUS 16.0f
 #define PROJSPAWNRADIUS2 (PROJSPAWNRADIUS*PROJSPAWNRADIUS)
 #define PROJRADIUS 1.0f
-#define PROJSCALE 0.1f
+#define PROJSCALE 0.2f
+#define PROJROTSPEED 1.2f
 
 #ifndef PROJECTILE
 #define PROJECTILE
@@ -46,7 +47,7 @@ public:
         rotAxis = vec3(0, 1, 0);
 
         sphere = boundingsphere(pos, PROJRADIUS);
-        lifespan = 10;
+        lifespan = 1;
     }
 
     Projectile(vec3 pos, vec3 dir)
@@ -58,7 +59,7 @@ public:
 
         rotAxis = cross(pos, dir);
         sphere = boundingsphere(pos, PROJRADIUS);
-        lifespan = 60;
+        lifespan = 360;
     }
 
     mat4 getModel() const {
@@ -69,15 +70,12 @@ public:
     }
 
     void rotateProj(float frametime) {
-        // Since the world has a separate rotation, we need to rotate the rotAxis by the world rotation
-//        vec4 realRotAxis = vec4(rotAxis, 1) * worldRotation;
-//        rot *= rotate(mat4(1), frametime, vec3(realRotAxis));
-        rot *= rotate(mat4(1), frametime, rotAxis);
-        detoriateProjectile();
+        rot *= rotate(mat4(1), frametime * PROJROTSPEED, rotAxis);
+        deteriorateProjectile();
     }
 
-    void detoriateProjectile() {
-        //lifespan -= 0.5;
+    void deteriorateProjectile() {
+        lifespan -= 1;
     }
 };
 #endif

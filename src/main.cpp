@@ -64,7 +64,6 @@ public:
     GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
     vector<Projectile> projectiles;
-    vector<vec3> enemies;
     Player player;
     World world;
 
@@ -447,26 +446,6 @@ public:
         pslime->addAttribute("vertTex");
         pslime->addUniform("part");
         pslime->addUniform("hit");
-
-        // initialize test projectile
-//        for(int i = 0; i < NUM_PROJECTILES; i++) {
-//            projectiles.emplace_back(player.pos);
-//        }
-for(int i = 0; i < 5; i++) {
-    // Spawn enemies
-    // Some quick math to generate a random initial position of a projectile
-    // Initialize position of the projectile to be anywhere on the sphere
-    float x = (rand() % (int) (PROJSPAWNRADIUS * 20)) / 10.0f - PROJSPAWNRADIUS;
-    // x^2 + y^2 + z^2 = r^2
-    // if x is known, y^2 + z^2 = r^2 - x^2
-    // generate y in range -sqrt(r^2 - x^2) to sqrt(r^2 - x^2)
-    float maxy = sqrt(PROJSPAWNRADIUS2 - x * x);
-    float y = (rand() % (int) (maxy * 20)) / 10.0f - maxy;
-    // z = sqrt(r^2 - x^2 - y^2)
-    float z = sqrt(PROJSPAWNRADIUS2 - x * x - y * y);
-
-    enemies.push_back(vec3(x, y, z));
-}
     }
 
     /****DRAW
@@ -490,6 +469,8 @@ for(int i = 0; i < 5; i++) {
         // Clear framebuffer.
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        player.updateLocation(frametime);
+
         glm::mat4 V, M, P; //View, Model and Perspective matrix
         V = player.camera();
         P = glm::perspective((float) (3.14159 / 4.), (float) ((float) width / (float) height), 0.1f,
@@ -509,7 +490,6 @@ for(int i = 0; i < 5; i++) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
 
-        //player.playerRotation();
         M = player.getModel();
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);
@@ -518,18 +498,10 @@ for(int i = 0; i < 5; i++) {
         for(int i = 0; i < projectiles.size(); i++) {
             if (projectiles[i].lifespan > 0) {
                 projectiles[i].rotateProj(frametime);
-                M = projectiles[i].getModel() * glm::scale(glm::mat4(1.0f), glm::vec3(2, 2, 2));
+                M = projectiles[i].getModel();
                 glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
                 projectileOBJ->draw(pplayer, GL_FALSE);
             } else projectiles.erase(projectiles.begin() + i);
-        }
-
-        for(int i = 0; i < 5; i++) {
-            mat4 T = translate(mat4(1), enemies[i]);
-            mat4 S = scale(mat4(1), vec3(0.5f));
-            M = world.rotation * T * S;
-            glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-            playerOBJ->draw(pplayer, GL_FALSE);
         }
 
         pplayer->unbind();
@@ -551,20 +523,10 @@ for(int i = 0; i < 5; i++) {
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
 
-        // updating the world and the player
-        world.rotateWorld(frametime);
-//        player.playerRotation();
-
         M = world.getModel();
 
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         worldOBJ->draw(prog, GL_FALSE);
-//
-//        M = player.getModel();
-//        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-//        playerOBJ->draw(prog, GL_FALSE);
-
-
 
         prog->unbind();
 
