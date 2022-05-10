@@ -8,6 +8,7 @@ using namespace std;
 using namespace glm;
 
 #define PLAYERSCALE 0.7f
+#define PI 3.14f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -22,6 +23,7 @@ public:
     mat4 rotation;
     mat4 mouseRot;
     vec3 fwd, right, up;
+    float height;
 
     Player()
     {
@@ -32,6 +34,7 @@ public:
         fwd = vec3(0, 0, -1);
         up = vec3(0, 1, 0);
         right = cross(fwd, up);
+        height = 0;
     }
 
     mat4 getModel() const {
@@ -77,6 +80,7 @@ public:
         else if(a)
             rotatePlayer(dt, up);
         pos = 15.f * fwd;
+        height = 1;
     }
 
     void playerRotation(GLFWwindow *window, double xpos, double ypos) {

@@ -26,6 +26,8 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 
 #include "WindowManager.h"
 #include "Shape.h"
+#include "WorldCollision.h"
+#include "MaterialLoader.h"
 // value_ptr for glm
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -53,6 +55,8 @@ class Application : public EventCallbacks {
 public:
 
     WindowManager *windowManager = nullptr;
+    WorldCollision worldCollision = WorldCollision();
+    MaterialLoader materialLoader = MaterialLoader("../resources/world-v3.mtl");;
 
     // Our shader program
     std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile;
@@ -233,6 +237,11 @@ public:
         worldOBJ->loadMesh(resourceDirectory + "/world-v1.obj");
         worldOBJ->resize();
         worldOBJ->init();
+        worldCollision.get3dGrid(worldOBJ);
+
+
+        // Load Materials
+        materialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
         playerOBJ->loadMesh(resourceDirectory + "/witch.obj");
@@ -364,6 +373,10 @@ public:
         prog->addUniform("V");
         prog->addUniform("M");
         prog->addUniform("campos");
+        prog->addUniform("MatAmb");
+        prog->addUniform("MatDif");
+        prog->addUniform("MatSpec");
+        prog->addUniform("MatShine");
         prog->addAttribute("vertPos");
         prog->addAttribute("vertNor");
         prog->addAttribute("vertTex");
@@ -493,6 +506,10 @@ public:
         M = player.getModel();
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(pplayer, GL_FALSE);
+
+        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+            cout << "Player Collided!!! " << "height: " << player.height << endl;
+        }
 
 
         for(int i = 0; i < projectiles.size(); i++) {
