@@ -14,11 +14,17 @@ using namespace glm;
 
 class Material{
 public:
+    int materialId;
+    string mtlName;
+    vec3 Ka, Kd, Ks, Ke;
+    float Ns, Ni, d;
+
     Material() {
     }
 
     void setMtlName(string mtlName) {
         this->mtlName = mtlName;
+        this->materialId = (int) mtlName.back();
     }
 
     string getMtlName() {
@@ -47,10 +53,6 @@ public:
 
 
 private:
-    string mtlName;
-    vec3 Ka, Kd, Ks, Ke;
-    float Ns, Ni, d;
-
     vec3 strToVec3(string str) {
         return vec3(
             stof(str.substr(0, str.find(" "))),

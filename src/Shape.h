@@ -1,6 +1,3 @@
-
-
-
 #pragma once
 
 #ifndef LAB471_SHAPE_H_INCLUDED
@@ -9,6 +6,8 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include "Material.h"
+#include <map>
 
 class Program;
 
@@ -20,7 +19,7 @@ public:
 	void loadMesh(const std::string &meshName, std::string *mtlName = NULL, unsigned char *(loadimage)(char const *, int *, int *, int *, int) = NULL);
 	void init();
 	void resize();
-	void draw(const std::shared_ptr<Program> prog, bool use_extern_texures) const;
+	void draw(const std::shared_ptr<Program> prog, bool use_extern_texures, vector<Material>);
 	unsigned int *textureIDs = NULL;
     std::vector<float> *posBuf = NULL;
     std::vector<unsigned int> *eleBuf = NULL;

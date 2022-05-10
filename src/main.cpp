@@ -56,7 +56,7 @@ public:
 
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
-    MaterialLoader materialLoader = MaterialLoader("../resources/world-v3.mtl");;
+    MaterialLoader materialLoader = MaterialLoader("../resources/world-v4.mtl");
 
     // Our shader program
     std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile;
@@ -234,7 +234,7 @@ public:
         shape->init();
 
         worldOBJ = make_shared<Shape>();
-        worldOBJ->loadMesh(resourceDirectory + "/world-v1.obj");
+        worldOBJ->loadMesh(resourceDirectory + "/world-v4.obj", (string *) "../resources/");
         worldOBJ->resize();
         worldOBJ->init();
         worldCollision.get3dGrid(worldOBJ);
@@ -380,6 +380,7 @@ public:
         prog->addAttribute("vertPos");
         prog->addAttribute("vertNor");
         prog->addAttribute("vertTex");
+        prog->addUniform("Opacity");
 
         pworld = std::make_shared<Program>();
         pworld->setVerbose(true);
@@ -490,10 +491,10 @@ public:
                              1000.0f); //so much type casting... GLM metods are quite funny ones
 
         pplayer->bind();
-        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
+        glUniformMatrix4fv(pplayer->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(pplayer->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniform3fv(pplayer->getUniform("campos"), 1, &player.pos[0]);
 
         glBindVertexArray(VertexArrayID);
         //actually draw from vertex 0, 3 vertices
@@ -505,7 +506,7 @@ public:
 
         M = player.getModel();
         glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        playerOBJ->draw(pplayer, GL_FALSE);
+        playerOBJ->draw(pplayer, GL_FALSE, {});
 
         if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
             cout << "Player Collided!!! " << "height: " << player.height << endl;
@@ -517,7 +518,7 @@ public:
                 projectiles[i].rotateProj(frametime);
                 M = projectiles[i].getModel();
                 glUniformMatrix4fv(pplayer->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-                projectileOBJ->draw(pplayer, GL_FALSE);
+                projectileOBJ->draw(pplayer, GL_FALSE, {});
             } else projectiles.erase(projectiles.begin() + i);
         }
 
@@ -542,8 +543,9 @@ public:
 
         M = world.getModel();
 
+        glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        worldOBJ->draw(prog, GL_FALSE);
+        worldOBJ->draw(prog, GL_FALSE, materialLoader.materials);
 
         prog->unbind();
 

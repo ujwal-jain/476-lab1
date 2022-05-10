@@ -3,6 +3,7 @@
 
 #include "GLSL.h"
 #include "Program.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
@@ -14,12 +15,13 @@ void Shape::loadMesh(const string &meshName, string *mtlpath, unsigned char *(lo
 	// Load geometry
 	// Some obj files contain material information.
 	// We'll ignore them for this assignment.
-	vector<tinyobj::shape_t> shapes;
-	vector<tinyobj::material_t> objMaterials;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> objMaterials;
 	string errStr;
 	bool rc = GL_FALSE;
-	if (mtlpath)
-		rc = tinyobj::LoadObj(shapes, objMaterials, errStr, meshName.c_str(), mtlpath->c_str());
+	if (mtlpath) {
+        rc = tinyobj::LoadObj(shapes, objMaterials, errStr, meshName.c_str(), mtlpath->c_str());
+    }
 	else
 		rc = tinyobj::LoadObj(shapes, objMaterials, errStr, meshName.c_str());
 
@@ -62,31 +64,33 @@ void Shape::loadMesh(const string &meshName, string *mtlpath, unsigned char *(lo
 		}
 	}
 	//material:
-	for (int i = 0; i < objMaterials.size(); i++)
-		if (objMaterials[i].diffuse_texname.size()>0)
-		{
-			char filepath[1000];
-			int width, height, channels;
-			string filename = objMaterials[i].ambient_texname;
-			int subdir = filename.rfind("\\");
-			if (subdir > 0)
-				filename = filename.substr(subdir + 1);
-			string str = *mtlpath + filename;
-			strcpy(filepath, str.c_str());
-			//stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp)
+	for (int i = 0; i < objMaterials.size(); i++) {
+//        cout << "material: " << objMaterials[i].name << endl;
+        if (objMaterials[i].diffuse_texname.size() > 0) {
+//            printf("entered\n");
+            char filepath[1000];
+            int width, height, channels;
+            string filename = objMaterials[i].ambient_texname;
+            int subdir = filename.rfind("\\");
+            if (subdir > 0)
+                filename = filename.substr(subdir + 1);
+            string str = *mtlpath + filename;
+            strcpy(filepath, str.c_str());
+            //stbi_load(char const *filename, int *x, int *y, int *comp, int req_comp)
 
-			unsigned char* data = loadimage(filepath, &width, &height, &channels, 4);
-			glGenTextures(1, &textureIDs[i]);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textureIDs[i]);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-			glGenerateMipmap(GL_TEXTURE_2D);
-			//delete[] data;
-		}
+            unsigned char *data = loadimage(filepath, &width, &height, &channels, 4);
+            glGenTextures(1, &textureIDs[i]);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureIDs[i]);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            //delete[] data;
+        }
+    }
 
 	int z;
 	z = 0;
@@ -209,7 +213,7 @@ void Shape::init()
 		assert(glGetError() == GL_NO_ERROR);
 	}
 }
-void Shape::draw(const shared_ptr<Program> prog,bool use_extern_texures) const
+void Shape::draw(const shared_ptr<Program> prog,bool use_extern_texures, vector<Material> materials)
 {
 	for (int i = 0; i < obj_count; i++)
 
@@ -252,13 +256,31 @@ void Shape::draw(const shared_ptr<Program> prog,bool use_extern_texures) const
 		
 		if (!use_extern_texures)
 		{
-			int textureindex = materialIDs[i];
-			if (textureindex >= 0)
-			{
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, textureIDs[textureindex]);
-			}
-		}
+            int textureindex = materialIDs[i];
+//            cout << "material ID: " << textureindex << endl;
+//            cout << "materials size: " << materials.size() << endl;
+//            if (textureindex >= 0)
+//            {
+//                glActiveTexture(GL_TEXTURE0);
+//                glBindTexture(GL_TEXTURE_2D, textureIDs[textureindex]);
+//            }
+            if(textureindex >= 0) {
+//                cout << "last material: " << materials[materials.size() - 1].getMtlName() << endl;
+
+                Material material = materials[materialIDs[i]];
+                cout << "material name: " << materialIDs[i] << endl;
+                glUniform3fv(prog->getUniform("MatAmb"), 1, &material.Ka[0]);
+                glUniform3fv(prog->getUniform("MatDif"), 1, &material.Kd[0]);
+                glUniform3fv(prog->getUniform("MatSpec"), 1, &material.Ks[0]);
+                glUniform1f(prog->getUniform("MatShine"), material.Ns);
+                glUniform1f(prog->getUniform("Opacity"), material.d);
+            }
+
+//            cout << "materialID: " << materialIDs[i] << endl;
+
+//            cout   << "textureindex: " << textureindex << endl;
+		} else {
+        }
 		// Draw
 		glDrawElements(GL_TRIANGLES, (int)eleBuf[i].size(), GL_UNSIGNED_INT, (const void *)0);
 

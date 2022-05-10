@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 
 #define WORLDROTSPEED 1.f
-#define WORLDSCALE 15
+#define WORLDSCALE 30
 #ifndef PI
 #define PI 3.14159265358979323846
 #endif

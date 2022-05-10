@@ -924,8 +924,10 @@ bool LoadObj(std::vector<shape_t> &shapes, // [output]
       shape = shape_t();
       faceGroup.clear();
 
+//      std::cout << "name buff: " << namebuf << std::endl;
       if (material_map.find(namebuf) != material_map.end()) {
         material = material_map[namebuf];
+//        std::cout << "material: " << material<< std::endl;
       } else {
         // { error!! material not found }
         material = -1;

@@ -15,6 +15,8 @@ using namespace std;
 
 class MaterialLoader{
 public:
+//    map<int, Material> materials;
+    vector<Material> materials;
     MaterialLoader(string filename) {
         this->filename = filename;
         file = ifstream(filename);
@@ -38,15 +40,12 @@ public:
 
             // get line
             string line = buffer.substr(mtl, end - mtl);
-            //cout << line << "\n\n";
 
             // get material name
             unsigned long mtlName = line.find(" ") + 1;
             unsigned long endline = line.find("\n", mtlName);
 
-            // cout << "Reading material: " << line.substr(mtlName + 1, endline - mtlName - 1) << endl;
             material.setMtlName(line.substr(mtlName, endline - mtlName));
-            // cout << "Reading material: " << material.getMtlName() << endl;
 
             // get material properties
             unsigned long pos = 0;
@@ -55,10 +54,6 @@ public:
                 material.setAttribute(line.substr(endline + 1, attributeName - endline - 1), line.substr(attributeName + 1, pos - attributeName - 1));
                 endline = pos;
             }
-
-            // cout << endl;
-            // material.getAttributes();
-            // cout << endl;
 
             // add material to list
             materials.push_back(material);
@@ -71,7 +66,6 @@ public:
 private:
     string filename;
     ifstream file;
-    vector<Material> materials;
 };
 
 #endif //LAB3_MATERIALLOADER_H
