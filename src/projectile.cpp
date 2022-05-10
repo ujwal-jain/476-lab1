@@ -47,7 +47,7 @@ public:
         rotAxis = vec3(0, 1, 0);
 
         sphere = boundingsphere(pos, PROJRADIUS);
-        lifespan = 1;
+        lifespan = 360.f;
     }
 
     Projectile(vec3 pos, vec3 dir)
@@ -59,7 +59,8 @@ public:
 
         rotAxis = cross(pos, dir);
         sphere = boundingsphere(pos, PROJRADIUS);
-        lifespan = 360;
+        // 360 is entire rotation + a bit
+        lifespan = 700;
     }
 
     mat4 getModel() const {
