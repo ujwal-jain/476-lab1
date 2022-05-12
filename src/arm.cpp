@@ -150,7 +150,7 @@ public:
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);\
         //cout << fwd.x;
-        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z), 10);
+        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z) - (cross(fwd, pDir) / vec3(10)), 10);
     }
 
 private:

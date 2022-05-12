@@ -36,7 +36,7 @@ public:
         rotAxis = cross(pos, dir);
         hitbox = boundingsphere(pos, PROJRADIUS);
         // 360 is entire rotation + a bit
-        lifespan = 1000;
+        lifespan = 500;
 
         graceTimeLeft = gracePeriodTime;
     }
