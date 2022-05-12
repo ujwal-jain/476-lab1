@@ -107,6 +107,7 @@ public:
     mat4 camera()
     {
         // The eye is above the player, the center is the center of the world, and up is the up vector of the player
+        
         return lookAt(40.f * fwd, vec3(0, 0, 0), up);
     }
 

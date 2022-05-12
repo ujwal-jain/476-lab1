@@ -46,10 +46,11 @@ void main()
 //    color = vec4(color.rgb * diff + color.rgb * 0.1, 1.0);
 
 //    float dC = max(0, dot(normal, light));
-    float dC = getdiff(campos);
+    vec3 test = vec3(0, 0, -25);
+    float dC = getdiff(test);
 
 //    color = vec4(dC, dC, dC, Opacity);
-    vec3 amb = MatAmb * 0.2;
+    vec3 amb = MatDif / 10;
 
     color = vec4((amb + dC*MatDif), Opacity);
 

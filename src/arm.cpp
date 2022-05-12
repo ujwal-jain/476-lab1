@@ -27,6 +27,8 @@ public:
     bool armRot;
     float totalRot;
     float lastRot;
+    float mouseDirX;
+    float mouseDirY;
 
     Arm()
     {
@@ -126,8 +128,11 @@ public:
         float xposFloat = static_cast<float>(xpos);
         float yposFloat = static_cast<float>(ypos);
 
-        float mouseDirX = -(xposFloat - (width / 2));
-        float mouseDirY = -(yposFloat - (height / 2));
+        mouseDirX = -(xposFloat - (width / 2));
+         mouseDirY = -(yposFloat - (height / 2));
+
+        cout << mouseDirY << "\n";
+
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
@@ -149,7 +154,6 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);\
-        //cout << fwd.x;
         return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z) - (cross(fwd, pDir) / vec3(10)), 10);
     }
 

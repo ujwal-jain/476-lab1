@@ -84,7 +84,7 @@ public:
 
         right = cross(fwd, up);
         projectileRot = projectileRot * rotate(mat4(1), ROTATIONSPEED * ftime, vec3(0, 0, 1));
-        // rotation = rotation * rotate(mat4(1), ROTATIONSPEED * ftime / 4, vec3(0, 1, 0));
+        // rotation = rotation * rotate(mat4(1), ROTATIONSPEED * ftime, vec3(0, 0, 1));
 
         if(spawnTime == 0) {
             spawnTime = rand() % PROJSPAWN + PROJSPAWN / 2;

@@ -561,6 +561,7 @@ public:
         P = glm::perspective((float) (3.14159 / 4.), (float) ((float) width / (float) height), 0.1f,
                              1000.0f); //so much type casting... GLM metods are quite funny ones
 
+        // vec3 test = vec3(0, 0, -15);
         prog->bind();
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -580,9 +581,9 @@ public:
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
 
-//        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-//            cout << "Player Collided!!! " << "height: " << player.height << endl;
-//        }
+       if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+           cout << "Player Collided!!! " << "height: " << player.height << endl;
+       }
 
         // draw player projectiles
         vector<int> projectilesToDelete = vector<int>();
