@@ -24,6 +24,8 @@ public:
     mat4 mouseRot;
     vec3 fwd, right, up;
     float height;
+    int health;
+    boundingsphere hitbox;
 
     Player()
     {
@@ -35,6 +37,8 @@ public:
         up = vec3(0, 1, 0);
         right = cross(fwd, up);
         height = 0;
+        hitbox = boundingsphere(pos, 0.5f);
+        health = 10;
     }
 
     mat4 getModel() const {
@@ -46,7 +50,7 @@ public:
                 // player rotation about mouse
                 * mouseRot
                 // rotation to orient the player correctly
-                * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+                * rotate(mat4(1), -PI / 2, vec3(1, 0, 0))
                 // scale the player
                 * scale(mat4(1), vec3(PLAYERSCALE));
     }
@@ -81,6 +85,7 @@ public:
         else if(a)
             rotatePlayer(dt, up);
         pos = 15.f * fwd;
+        hitbox.center = pos;
         height = 1;
     }
 
@@ -120,7 +125,7 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z));
+        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z), 10);
     }
 
 private:

@@ -134,12 +134,6 @@ public:
         mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) - PI/4.0f, vec3(0, 0, 1));
     }
 
-    mat4 camera()
-    {
-        // The eye is above the player, the center is the center of the world, and up is the up vector of the player
-        return lookAt(40.f * fwd, vec3(0, 0, 0), up);
-    }
-
     Projectile spawnProjectile() {
         // pDirRight represents the x component of the mouseDir vector in world space
         float mouseRightToUp = abs(mouseDir.x / mouseDir.y);
@@ -156,7 +150,7 @@ public:
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);\
         //cout << fwd.x;
-        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z));
+        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z), 10);
     }
 
 private:

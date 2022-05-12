@@ -264,10 +264,6 @@ void Shape::draw(const shared_ptr<Program> prog,bool use_extern_texures, vector<
                 glUniform1f(prog->getUniform("MatShine"), material.Ns);
                 glUniform1f(prog->getUniform("Opacity"), material.d);
             }
-
-//            cout << "materialID: " << materialIDs[i] << endl;
-
-//            cout   << "textureindex: " << textureindex << endl;
 		} else {
         }
 		// Draw

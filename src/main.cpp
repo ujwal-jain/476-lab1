@@ -11,7 +11,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #define PLANE_SIZE 30
 #define HPL_SIZE (PLANE_SIZE / 2.f)
 #endif
-#define NUM_PROJECTILES 5
+#define NUM_ENEMIES 5
 
 #include "stb_image.h"
 #include "GLSL.h"
@@ -33,6 +33,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 // value_ptr for glm
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include "enemy.cpp"
 
 using namespace std;
 using namespace glm;
@@ -74,10 +75,14 @@ public:
     // Data necessary to give our box to OpenGL
     GLuint VertexBufferID, VertexNormDBox, VertexTexBox, IndexBufferIDBox;
 
-    vector<Projectile> projectiles;
+    vector<Projectile> player_projectiles;
+    vector<Projectile> enemy_projectiles;
     Player player;
     Arm arm;
     World world;
+    vector<Enemy> enemies;
+    vector<int> game_stats;
+    bool gameDone = false;
 
     //texture data
     GLuint Texture;
@@ -90,6 +95,8 @@ public:
     float totalTime = 0;
 
     void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+        if(gameDone)
+            glfwSetWindowShouldClose(window, GL_TRUE);
         if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
@@ -135,7 +142,7 @@ public:
             arm.d = 0;
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-            projectiles.push_back(arm.spawnProjectile());
+            player_projectiles.push_back(arm.spawnProjectile());
             player.space = 1;
             arm.space = 1;
         }
@@ -511,6 +518,18 @@ public:
         pslime->addAttribute("vertTex");
         pslime->addUniform("part");
         pslime->addUniform("hit");
+
+
+        for(int i = 0; i < NUM_ENEMIES; i++) {
+            float x = (float)(rand() % 200 - 100) / 100.0f;
+            float y = (float)(rand() % 200 - 100) / 100.0f;
+            float z = (float)(rand() % 200 - 100) / 100.0f;
+            vec3 forward = normalize(vec3(x, y, z));
+            enemies.emplace_back(forward);
+        }
+
+        game_stats.push_back(player.health);
+        game_stats.push_back(enemies.size());
     }
 
     /****DRAW
@@ -560,21 +579,96 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
-        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-            cout << "Player Collided!!! " << "height: " << player.height << endl;
-        }
 
+//        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+//            cout << "Player Collided!!! " << "height: " << player.height << endl;
+//        }
 
-        for(int i = 0; i < projectiles.size(); i++) {
-            if (projectiles[i].lifespan > 0) {
-                projectiles[i].rotateProj(frametime);
-                M = projectiles[i].getModel();
+        // draw player projectiles
+        vector<int> projectilesToDelete = vector<int>();
+        vector<int> enemiesHit = vector<int>();
+        for(int i = 0; i < player_projectiles.size(); i++) {
+            Projectile *proj = &player_projectiles[i];
+            // check if collided with player
+            if(proj->graceTimeLeft == 0 && collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
+                player.health -= 1;
+                projectilesToDelete.push_back(i);
+                printf("Player hit!\n");
+                continue;
+            }
+            bool hitEnemy = false;
+            for(int j = 0; j < enemies.size(); j++) {
+                if(collisions::detectSphereSphere(proj->hitbox, enemies[j].hitbox)) {
+                    enemiesHit.push_back(j);
+                    projectilesToDelete.push_back(i);
+                    hitEnemy=true;
+                }
+            }
+            if(hitEnemy) {
+                printf("Enemy hit!\n");
+                continue;
+            }
+
+            if (proj->lifespan > 0) {
+                proj->rotateProj(frametime);
+                M = proj->getModel();
                 glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
                 projectileOBJ->draw(prog, GL_FALSE, {});
-            } else projectiles.erase(projectiles.begin() + i);
+            } else player_projectiles.erase(player_projectiles.begin() + i);
+
+        }
+        for(int i = projectilesToDelete.size() - 1; i >= 0; i--) {
+            player_projectiles.erase(player_projectiles.begin() + projectilesToDelete[i]);
+        }
+        for(int i = enemiesHit.size() - 1; i >= 0; i--) {
+            enemies.erase(enemies.begin() + enemiesHit[i]);
         }
 
+        // draw enemies
+        for(int i = 0; i < enemies.size(); i++) {
+            if(enemies[i].updateEnemy(player.fwd, frametime)) {
+                enemy_projectiles.push_back(enemies[i].spawnProjectile());
+            };
+            M = enemies[i].getModel();
+            glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+            playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+        }
 
+        // draw enemy projectiles
+        projectilesToDelete.clear();
+        for(int i = 0; i < enemy_projectiles.size(); i++) {
+            Projectile *proj = &enemy_projectiles[i];
+            if(collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
+                player.health -= 1;
+                projectilesToDelete.push_back(i);
+                printf("Player hit!\n");
+                continue;
+            }
+            if(proj->lifespan > 0) {
+                proj->rotateProj(frametime);
+                M = proj->getModel();
+                glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+                projectileOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+            } else
+                enemy_projectiles.erase(enemy_projectiles.begin() + i);
+        }
+        for(int i = projectilesToDelete.size() - 1; i >= 0; i--) {
+            enemy_projectiles.erase(enemy_projectiles.begin() + projectilesToDelete[i]);
+        }
+
+        if(player.health != game_stats[0] || enemies.size() != game_stats[1]) {
+            printf("Player health: %d | Enemies left: %d\n", player.health, enemies.size());
+            game_stats[0] = player.health;
+            game_stats[1] = enemies.size();
+        }
+
+        if(enemies.size() == 0) {
+            printf("You win!\n");
+        }
+        if(player.health == 0) {
+            printf("Game over!\n");
+            gameDone = true;
+        }
 
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -593,9 +687,6 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         armOBJ->draw(prog, GL_FALSE, armMaterialLoader.materials);
 
-        
-
-
         // Draw the box using GLSL.
 
         //send the matrices to the shaders
@@ -605,9 +696,7 @@ public:
         glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
 
         glBindVertexArray(VertexArrayID);
-        //actually draw from vertex 0, 3 vertices
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
