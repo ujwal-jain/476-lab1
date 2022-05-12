@@ -9,7 +9,6 @@
 
 using namespace std;
 
-
 void Shape::loadMesh(const string &meshName, string *mtlpath, unsigned char *(loadimage)(char const *, int *, int *, int *, int))
 {
 	// Load geometry

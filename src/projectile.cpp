@@ -65,8 +65,9 @@ public:
 
     mat4 getModel() const {
         return
-                (rot
+            (rot
             * translate(mat4(1), pos))
+            * translate(mat4(1), vec3(0, 0, 0))
             * scale(mat4(1), vec3(PROJSCALE));
     }
 

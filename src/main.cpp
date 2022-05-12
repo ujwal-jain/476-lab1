@@ -18,12 +18,14 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "Program.h"
 #include "MatrixStack.h"
 #include "player.cpp"
+#include "arm.cpp"
 #include "slime.cpp"
 #include "collisions.h"
 #include "boundingplane.h"
 #include "world.cpp"
 #include "projectile.cpp"
 
+#include "tiny_obj_loader.h"
 #include "WindowManager.h"
 #include "Shape.h"
 #include "WorldCollision.h"
@@ -31,12 +33,15 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 // value_ptr for glm
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
 using namespace std;
 using namespace glm;
 shared_ptr<Shape> shape;
 shared_ptr<Shape> worldOBJ;
 shared_ptr<Shape> playerOBJ;
 shared_ptr<Shape> projectileOBJ;
+shared_ptr<Shape> armOBJ;
+
 
 
 double get_last_elapsed_time()
@@ -59,7 +64,7 @@ public:
     MaterialLoader materialLoader = MaterialLoader("../resources/world-v4.mtl");
 
     // Our shader program
-    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile;
+    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm;
 
     // Contains vertex information for OpenGL
     GLuint VertexArrayID;
@@ -69,6 +74,7 @@ public:
 
     vector<Projectile> projectiles;
     Player player;
+    Arm arm;
     World world;
 
     //texture data
@@ -89,41 +95,51 @@ public:
         if (key == GLFW_KEY_W && action == GLFW_PRESS) {
             world.w = 1;
             player.w = 1;
+            arm.w = 1;
         }
         if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
             world.w = 0;
             player.w = 0;
+            arm.w = 0;
         }
         if (key == GLFW_KEY_S && action == GLFW_PRESS) {
             world.s = 1;
             player.s = 1;
+            arm.s = 1;
         }
         if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
             world.s = 0;
             player.s = 0;
+            arm.s = 0;
         }
         if (key == GLFW_KEY_A && action == GLFW_PRESS) {
             world.a = 1;
             player.a = 1;
+            arm.a = 1;
         }
         if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
             world.a = 0;
             player.a = 0;
+            arm.a = 0;
         }
         if (key == GLFW_KEY_D && action == GLFW_PRESS) {
             world.d = 1;
             player.d = 1;
+            arm.d = 1;
         }
         if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
             world.d = 0;
             player.d = 0;
+            arm.d = 0;
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
-            projectiles.push_back(player.spawnProjectile());
+            projectiles.push_back(arm.spawnProjectile());
             player.space = 1;
+            arm.space = 1;
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             player.space = 0;
+            arm.space = 0;
         }
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -138,6 +154,8 @@ public:
     // written
     void mouseCallback(GLFWwindow *window, double xpos, double ypos) {
        player.playerRotation(window, xpos, ypos);
+       arm.armRotation(window, xpos, ypos);
+       //need to know when click happens
     }
 
     //if the window is resized, capture the new size and reset the viewport
@@ -244,12 +262,17 @@ public:
         materialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
-        playerOBJ->loadMesh(resourceDirectory + "/witch.obj");
+        playerOBJ->loadMesh(resourceDirectory + "/new-wizard-body.obj");
         playerOBJ->resize();
         playerOBJ->init();
 
+        armOBJ = make_shared<Shape>();
+        armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj");
+        armOBJ->resize();
+        armOBJ->init();
+
         projectileOBJ = make_shared<Shape>();
-        projectileOBJ->loadMesh(resourceDirectory + "/sphere.obj");
+        projectileOBJ->loadMesh(resourceDirectory + "/fireball.obj");
         projectileOBJ->resize();
         projectileOBJ->init();
 
@@ -326,6 +349,14 @@ public:
         Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
         // Then bind the uniform samplers to texture units:
         glUseProgram(pplayer->pid);
+        glUniform1i(Tex1Location, 0);
+        glUniform1i(Tex2Location, 1);
+
+        //ARM
+        Tex1Location = glGetUniformLocation(parm->pid, "tex");//tex, tex2... sampler in the fragment shader
+        Tex2Location = glGetUniformLocation(parm->pid, "tex2");
+        // Then bind the uniform samplers to texture units:
+        glUseProgram(parm->pid);
         glUniform1i(Tex1Location, 0);
         glUniform1i(Tex2Location, 1);
 
@@ -413,6 +444,22 @@ public:
         pplayer->addAttribute("vertNor");
         pplayer->addAttribute("vertTex");
 
+        parm = std::make_shared<Program>();
+        parm->setVerbose(true);
+        parm->setShaderNames(resourceDirectory + "/shader_vertex_player.glsl",
+                                resourceDirectory + "/shader_fragment_player.glsl");
+        if (!parm->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        parm->addUniform("P");
+        parm->addUniform("V");
+        parm->addUniform("M");
+        parm->addUniform("campos");
+        parm->addAttribute("vertPos");
+        parm->addAttribute("vertNor");
+        parm->addAttribute("vertTex");
+
         pprojectile = std::make_shared<Program>();
         pprojectile->setVerbose(true);
         pprojectile->setShaderNames(resourceDirectory + "/shader_vertex.glsl",
@@ -484,6 +531,7 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         player.updateLocation(frametime);
+        arm.updateLocation(frametime);
 
         glm::mat4 V, M, P; //View, Model and Perspective matrix
         V = player.camera();
@@ -524,6 +572,28 @@ public:
 
         pplayer->unbind();
 
+
+        parm->bind();
+        glUniformMatrix4fv(parm->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(parm->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        glUniformMatrix4fv(parm->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        glUniform3fv(parm->getUniform("campos"), 1, &arm.pos[0]);
+
+        glBindVertexArray(VertexArrayID);
+        //actually draw from vertex 0, 3 vertices
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
+
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, Texture);
+
+        M = arm.getModel();
+        glUniformMatrix4fv(parm->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        armOBJ->draw(parm, GL_FALSE, {});
+
+        parm->unbind();
+
+
         // Draw the box using GLSL.
         prog->bind();
 
@@ -549,7 +619,7 @@ public:
 
         prog->unbind();
 
-        glBindVertexArray(0);
+        glBindVertexArray(0);  
     }
 };
 
