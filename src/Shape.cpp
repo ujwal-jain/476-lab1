@@ -257,18 +257,8 @@ void Shape::draw(const shared_ptr<Program> prog,bool use_extern_texures, vector<
 		if (!use_extern_texures)
 		{
             int textureindex = materialIDs[i];
-//            cout << "material ID: " << textureindex << endl;
-//            cout << "materials size: " << materials.size() << endl;
-//            if (textureindex >= 0)
-//            {
-//                glActiveTexture(GL_TEXTURE0);
-//                glBindTexture(GL_TEXTURE_2D, textureIDs[textureindex]);
-//            }
             if(textureindex >= 0) {
-//                cout << "last material: " << materials[materials.size() - 1].getMtlName() << endl;
-
                 Material material = materials[materialIDs[i]];
-                cout << "material name: " << materialIDs[i] << endl;
                 glUniform3fv(prog->getUniform("MatAmb"), 1, &material.Ka[0]);
                 glUniform3fv(prog->getUniform("MatDif"), 1, &material.Kd[0]);
                 glUniform3fv(prog->getUniform("MatSpec"), 1, &material.Ks[0]);
