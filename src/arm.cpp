@@ -7,7 +7,7 @@
 using namespace std;
 using namespace glm;
 
-#define ARMSCALE 0.5f
+#define ARMSCALE 0.7f
 #define PI 3.14159265f
 
 #ifndef PROJECTILE
@@ -47,7 +47,7 @@ public:
         // player rotation around world
         return rotation
                 // height above world
-                * translate(mat4(1), vec3(0, 0, -15))
+                * translate(mat4(1), vec3(0, 0, -13))
                 // player rotation about mouse
                 * mouseRot
                 // rotation to orient the player correctly
@@ -57,7 +57,7 @@ public:
 
                 * fireRotation
 
-                * translate(mat4(1), vec3(-0.2, -0.1, 0))
+                * translate(mat4(1), vec3(-0.3, -0.1, 0))
 
                 //* rotate(mat4(1), PI / 2, vec3(1, 0, 0))
                 // scale the player
@@ -156,7 +156,7 @@ public:
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);\
         //cout << fwd.x;
-        return Projectile(pos + cross(fwd + vec3(0.3), pDir), vec3(pDir.x, pDir.y, pDir.z));
+        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z));
     }
 
 private:

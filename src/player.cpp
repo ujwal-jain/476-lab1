@@ -7,7 +7,7 @@
 using namespace std;
 using namespace glm;
 
-#define PLAYERSCALE 1.0f
+#define PLAYERSCALE 1.3f
 #define PI 3.14f
 
 #ifndef PROJECTILE
@@ -40,6 +40,7 @@ public:
     mat4 getModel() const {
         // player rotation around world
         return rotation
+                * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                 // height above world
                 * translate(mat4(1), vec3(0, 0, -15))
                 // player rotation about mouse
