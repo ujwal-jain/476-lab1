@@ -131,7 +131,7 @@ public:
         mouseDirX = -(xposFloat - (width / 2));
          mouseDirY = -(yposFloat - (height / 2));
 
-        cout << mouseDirY << "\n";
+        // cout << mouseDirY << "\n";
 
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
