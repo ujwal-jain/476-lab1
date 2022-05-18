@@ -42,6 +42,7 @@ shared_ptr<Shape> worldOBJ;
 shared_ptr<Shape> playerOBJ;
 shared_ptr<Shape> projectileOBJ;
 shared_ptr<Shape> armOBJ;
+shared_ptr<Shape> asteroidOBJ;
 
 
 
@@ -65,6 +66,7 @@ public:
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
     MaterialLoader playerMaterialLoader = MaterialLoader("../resources/new-wizard-body.mtl");
     MaterialLoader armMaterialLoader = MaterialLoader("../resources/new-wizard-arm2.mtl");
+    MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
 
     // Our shader program
     std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm;
@@ -89,8 +91,6 @@ public:
     GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
-
-
 
     float totalTime = 0;
 
@@ -271,6 +271,7 @@ public:
         worldMaterialLoader.readMaterialFile();
         playerMaterialLoader.readMaterialFile();
         armMaterialLoader.readMaterialFile();
+        asteroidMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
         playerOBJ->loadMesh(resourceDirectory + "/new-wizard-body.obj", (string *) "../resources/");
@@ -286,6 +287,11 @@ public:
         projectileOBJ->loadMesh(resourceDirectory + "/fireball.obj");
         projectileOBJ->resize();
         projectileOBJ->init();
+
+        asteroidOBJ = make_shared<Shape>();
+        asteroidOBJ->loadMesh(resourceDirectory + "/asteroid.obj", (string *) "../resources/");
+        asteroidOBJ->resize();
+        asteroidOBJ->init();
 
         int width, height, channels;
         char filepath[1000];
@@ -519,7 +525,6 @@ public:
         pslime->addUniform("part");
         pslime->addUniform("hit");
 
-
         for(int i = 0; i < NUM_ENEMIES; i++) {
             float x = (float)(rand() % 200 - 100) / 100.0f;
             float y = (float)(rand() % 200 - 100) / 100.0f;
@@ -707,6 +712,9 @@ public:
         glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
+
+
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &P[0][0]);
 
         prog->unbind();
 

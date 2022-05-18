@@ -24,7 +24,10 @@ public:
 
     void readMaterialFile() {
         // if file doesn't exist
-        if (!file) return;
+        if (!file) {
+            cout << "Unable to open file: " << filename << endl;
+            return;
+        }
 
         cout << "Reading material file: " << filename << endl;
 
