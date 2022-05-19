@@ -14,7 +14,14 @@ using namespace glm;
 
 class WorldCollision {
 public:
+    int gridSize;
     std::vector<vector<float>> grid;
+    std::vector<vector<bool>> gridFilled;
+
+    float globalMinX = 0;
+    float globalMinY = 0;
+    float globalMaxX = 0;
+    float globalMaxY = 0;
 
     /* Create a 3d grid representing faces in the 3d Object
      * input: shared pointer -> Shape
@@ -22,7 +29,7 @@ public:
     */
     void get3dGrid(shared_ptr<Shape> worldOBJ) {
         // init grid size
-        int gridSize = (int)sqrt(worldOBJ->posBuf[0].size() / 3);
+        gridSize = 10;
 
         // identify different faces from eleBuf
         for (int idx = 0; idx < worldOBJ->eleBuf[0].size() / 3; idx++) {
@@ -31,24 +38,35 @@ public:
             int v3 = worldOBJ->eleBuf[0][idx * 3 + 2];
 
             faces.push_back(make_tuple(convertTo2D(worldOBJ, v1), convertTo2D(worldOBJ, v2), convertTo2D(worldOBJ, v3)));
+//            faces3D.push_back(make_tuple(WorldVertex(v1), WorldVertex(v2), WorldVertex(v3)));
         }
 
         // init grid with NULL values
         for (int idx = 0; idx < gridSize; idx++) {
             vector<float> temp;
+            vector<bool> tempFilled;
             for (int idx2 = 0; idx2 < gridSize; idx2++) {
                 temp.push_back(0.0f);
+                tempFilled.push_back(false);
             }
             grid.push_back(temp);
+            gridFilled.push_back(tempFilled);
         }
+
 
         // rasterization of faces
         for (tuple<Vertex2D, Vertex2D, Vertex2D> face: faces) {
             Vertex2D v1 = get<0>(face);
             Vertex2D v2 = get<1>(face);
             Vertex2D v3 = get<2>(face);
-            float r = (v1.r + v2.r + v3.r) / 3;
+
+            float r = max({v1.r, v2.r, v3.r});
             float minx, maxx, miny, maxy;
+
+            minx = min({v1.i, v2.i, v3.i});
+            maxx = max({v1.i, v2.i, v3.i});
+            miny = min({v1.j, v2.j, v3.j});
+            maxy = max({v1.j, v2.j, v3.j});
 
             v1.i = mapToRange(v1.i, -1, 1, 0, gridSize - 1);
             v1.j = mapToRange(v1.j, -1, 1, 0, gridSize - 1);
@@ -64,29 +82,63 @@ public:
             miny = min({v1.j, v2.j, v3.j});
             maxy = max({v1.j, v2.j, v3.j});
 
-            for (int x = minx; x < maxx; x++) {
-                for (int y = miny; y < maxy; y++) {
-                    if(PointInTriangle(Vertex2D(0, x, y), v1, v2, v3)) grid[x][y] = r;
+            for (int x = minx; x <= maxx; x++) {
+                for (int y = miny; y <= maxy; y++) {
+                    if(PointInTriangle(Vertex2D(0, x, y), v1, v2, v3)) {
+                        grid[x][y] = max({grid[x][y], r});
+                        gridFilled[x][y] = true;
+                    }
                 }
             }
         }
     }
 
     bool didPlayerCollide(shared_ptr<Shape> worldOBJ, vec3 playerPos, float playerHeight) {
-        int gridSize = (int)sqrt(worldOBJ->posBuf[0].size() / 3);
         float r = length(vec3(playerPos.x, playerPos.y, playerPos.z));
         float t = acos(playerPos.z / r);
         float p = playerPos.x != 0 && playerPos.y != 0 ? atan(playerPos.y / playerPos.x) : 0;
 
-        t = (int)mapToRange(t, 0, 3.14159, 0, gridSize - 1);
-        p = (int)mapToRange(p, -1.5708, 1.57078, 0, gridSize - 1);
+        t = round(mapToRange(t, 0, 3.14159, 0, gridSize - 1));
+        p = round(mapToRange(p, -1.5708, 1.57078, 0, gridSize - 1));
 
-        printf("%f %f\n", playerHeight, grid[t][p]);
+
+//        printf("%f %f %d\n", playerHeight, grid[t][p], gridFilled[t][p]);
+//        cout << playerHeight << " " << grid[t][p] << " " << gridFilled[t][p] << endl;
         if (playerHeight <= grid[t][p]) return true;
         return false;
     }
 
+    float getHeight(vec3 playerPos) {
+        float r = length(vec3(playerPos.x, playerPos.y, playerPos.z));
+        float t = acos(playerPos.z / r);
+        float p = playerPos.x != 0 && playerPos.y != 0 ? atan(playerPos.y / playerPos.x) : 0;
+
+        int x = round(mapToRange(t, 0, 3.14159, 0, gridSize - 1));
+        int y = round(mapToRange(p, -1.5708, 1.57078, 0, gridSize - 1));
+//        printf("%d %d %d\n", gridSize, x, y);
+        return grid[x][y];
+    }
+
 private:
+
+    class WorldVertex {
+    public:
+        float x, y, z;
+
+        WorldVertex(float x, float y, float z) {
+            this->x = x;
+            this->y = y;
+            this->z = z;
+        }
+
+        WorldVertex(vec3 v) {
+            this->x = v.x;
+            this->y = v.y;
+            this->z = v.z;
+        }
+    };
+
+    std::vector<tuple<WorldVertex, WorldVertex, WorldVertex>> faces3D;
 
     class Vertex2D {
     public:
@@ -131,6 +183,9 @@ private:
         float r = length(vec3(x, y, z));
         float t = acos(z / r);
         float p = atan(y / x);
+
+//        cout << "x: " << x << " y: " << y << " z: " << z << endl;
+//        cout << "r: " << r << endl;
 
         return Vertex2D(r, mapToRange(t, 0, 3.14159, -1, 1), mapToRange(p, -1.5708, 1.57078, -1, 1));
     }

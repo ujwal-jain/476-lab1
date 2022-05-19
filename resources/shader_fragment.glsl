@@ -11,6 +11,7 @@ uniform vec3 MatDif;
 uniform vec3 MatSpec;
 uniform float MatShine;
 uniform float Opacity;
+uniform float Height;
 
 float getdiff(vec3 lp) {
     vec3 n = normalize(vertex_normal);
@@ -43,4 +44,8 @@ void main()
 
     vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
     color = vec4(color3, Opacity);
+//
+//    if(Height != -1) {
+//        color.g *= Height;
+//    }
 }

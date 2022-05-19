@@ -406,6 +406,7 @@ public:
         glUseProgram(pslime->pid);
         glUniform1i(Tex1Location, 2);
         glUniform1i(Tex2Location, 3);
+
     }
 
     //General OGL initialization - set OGL state here
@@ -438,6 +439,7 @@ public:
         prog->addAttribute("vertNor");
         prog->addAttribute("vertTex");
         prog->addUniform("Opacity");
+        prog->addUniform("Height");
 
         pworld = std::make_shared<Program>();
         pworld->setVerbose(true);
@@ -583,6 +585,7 @@ public:
 //        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
 
         prog->bind();
+        glUniform1f(prog->getUniform("Height"), -1.f);
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -599,10 +602,9 @@ public:
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
 
-        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-            cout << "Player Collided!!! " << "height: " << player.height << endl;
-
-        }
+//        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+////            cout << "Player Collided!!! " << "height: " << player.height << endl;
+//        }
 
         // draw player projectiles
         vector<int> projectilesToDelete = vector<int>();
@@ -724,8 +726,10 @@ public:
 
         M = world.getModel();
 
+        glUniform1f(prog->getUniform("Height"), worldCollision.getHeight(player.fwd));
         glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+
         worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
 
 
@@ -752,11 +756,11 @@ public:
         glViewport(0, 0, width, height);
         drawScene(true);
 
-//        // top down cam
-//        glClear(GL_DEPTH_BUFFER_BIT);
-//        glViewport(0, height - height / 4, width / 4, height / 4);
-//        // Clear framebuffer.
-//        drawScene(false);
+        // top down cam
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, height - height / 6, width / 6, height / 6);
+        // Clear framebuffer.
+        drawScene(false);
     }
 };
 
