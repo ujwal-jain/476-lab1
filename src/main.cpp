@@ -24,6 +24,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "boundingplane.h"
 #include "world.cpp"
 #include "projectile.cpp"
+#include "camera.cpp"
 
 #include "tiny_obj_loader.h"
 #include "WindowManager.h"
@@ -82,6 +83,7 @@ public:
     Player player;
     Arm arm;
     World world;
+    Camera camera;
     vector<Enemy> enemies;
     vector<int> game_stats;
     bool gameDone = false;
@@ -102,41 +104,49 @@ public:
         }
 
         if (key == GLFW_KEY_W && action == GLFW_PRESS) {
+            camera.w = 1;
             world.w = 1;
             player.w = 1;
             arm.w = 1;
         }
         if (key == GLFW_KEY_W && action == GLFW_RELEASE) {
+            camera.w = 0;
             world.w = 0;
             player.w = 0;
             arm.w = 0;
         }
         if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+            camera.s = 1;
             world.s = 1;
             player.s = 1;
             arm.s = 1;
         }
         if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
+            camera.s = 0;
             world.s = 0;
             player.s = 0;
             arm.s = 0;
         }
         if (key == GLFW_KEY_A && action == GLFW_PRESS) {
+            camera.a = 1;
             world.a = 1;
             player.a = 1;
             arm.a = 1;
         }
         if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
+            camera.a = 0;
             world.a = 0;
             player.a = 0;
             arm.a = 0;
         }
         if (key == GLFW_KEY_D && action == GLFW_PRESS) {
+            camera.d = 1;
             world.d = 1;
             player.d = 1;
             arm.d = 1;
         }
         if (key == GLFW_KEY_D && action == GLFW_RELEASE) {
+            camera.d = 0;
             world.d = 0;
             player.d = 0;
             arm.d = 0;
@@ -265,7 +275,6 @@ public:
         worldOBJ->resize();
         worldOBJ->init();
         worldCollision.get3dGrid(worldOBJ);
-
 
         // Load Materials
         worldMaterialLoader.readMaterialFile();
@@ -537,15 +546,10 @@ public:
         game_stats.push_back(enemies.size());
     }
 
-    /****DRAW
-    This is the most important function in your program - this is where you
-    will actually issue the commands to draw any geometry you have set up to
-    draw
-    ********/
-    void render() {
-
+    void drawScene(bool camState) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         double frametime = get_last_elapsed_time();
         totalTime += frametime;
 
@@ -553,20 +557,31 @@ public:
         int width, height;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float) height;
-        glViewport(0, 0, width, height);
 
-        // Clear framebuffer.
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+//        vector<float> playerstate = player.getState();
         player.updateLocation(frametime);
+        camera.update(frametime, player.pos, player.up, player.right, player.fwd);
         arm.updateLocation(frametime);
 
         glm::mat4 V, M, P; //View, Model and Perspective matrix
-        V = player.camera();
-        P = glm::perspective((float) (3.14159 / 4.), (float) ((float) width / (float) height), 0.1f,
-                             1000.0f); //so much type casting... GLM metods are quite funny ones
+        // player cam
+        if(camState)
+            V = camera.playerCam(player.pos);
+        // top down
+        else
+            V = camera.topCam();
 
-        // vec3 test = vec3(0, 0, -15);
+        // player cam
+        if(camState)
+            P = glm::perspective((float) (3.14159 / 5.5f), (float) ((float) width / (float) height), 0.01f,
+                             100.0f); //so much type casting... GLM metods are quite funny ones
+         // top down
+         else
+            P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
+                                 1000.0f); //so much type casting... GLM metods are quite funny ones
+//        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
+
         prog->bind();
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -574,9 +589,7 @@ public:
         glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
 
         glBindVertexArray(VertexArrayID);
-        //actually draw from vertex 0, 3 vertices
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
@@ -586,9 +599,10 @@ public:
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
 
-       if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-           cout << "Player Collided!!! " << "height: " << player.height << endl;
-       }
+        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+            cout << "Player Collided!!! " << "height: " << player.height << endl;
+
+        }
 
         // draw player projectiles
         vector<int> projectilesToDelete = vector<int>();
@@ -670,6 +684,7 @@ public:
 
         if(enemies.size() == 0) {
             printf("You win!\n");
+            gameDone = true;
         }
         if(player.health == 0) {
             printf("Game over!\n");
@@ -718,7 +733,30 @@ public:
 
         prog->unbind();
 
-        glBindVertexArray(0);  
+        glBindVertexArray(0);
+    }
+
+    /****DRAW
+    This is the most important function in your program - this is where you
+    will actually issue the commands to draw any geometry you have set up to
+    draw
+    ********/
+    void render() {
+
+        // Get current frame buffer size.
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+
+        // player cam
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glViewport(0, 0, width, height);
+        drawScene(true);
+
+//        // top down cam
+//        glClear(GL_DEPTH_BUFFER_BIT);
+//        glViewport(0, height - height / 4, width / 4, height / 4);
+//        // Clear framebuffer.
+//        drawScene(false);
     }
 };
 
@@ -737,8 +775,8 @@ int main(int argc, char **argv)
 	/* your main will always include a similar set up to establish your window
 		and GL context, etc. */
 	WindowManager * windowManager = new WindowManager();
-	//windowManager->init(1920, 1080);
-    windowManager->init(960, 540);
+	windowManager->init(1920, 1080);
+//    windowManager->init(960, 540);
 	windowManager->setEventCallbacks(application);
 	application->windowManager = windowManager;
 

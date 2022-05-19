@@ -7,8 +7,10 @@
 using namespace std;
 using namespace glm;
 
-#define PLAYERSCALE 1.3f
+#define PLAYERSCALE 0.7f
+#define PLAYERROTSPEED 0.6f
 #define PI 3.14f
+#define PLAYERPOSHEIGHT 13.6f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -29,14 +31,14 @@ public:
 
     Player()
     {
-        pos = vec3(0, 0, 15);
+        pos = vec3(0, 0, PLAYERPOSHEIGHT);
         rotation = mat4(1);
         mouseRot = mat4(1);
         w = a = s = d = space = 0;
         fwd = vec3(0, 0, -1);
         up = vec3(0, 1, 0);
         right = cross(fwd, up);
-        height = 0;
+        height = 0.3f;
         hitbox = boundingsphere(pos, 0.5f);
         health = 10;
     }
@@ -46,7 +48,7 @@ public:
         return rotation
                 * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                 // height above world
-                * translate(mat4(1), vec3(0, 0, -15))
+                * translate(mat4(1), vec3(0, 0, -1 * PLAYERPOSHEIGHT))
                 // player rotation about mouse
                 * mouseRot
                 // rotation to orient the player correctly
@@ -60,33 +62,33 @@ public:
         // either about right, up, right + up, or right - up given a combination of wasd
         if(w) {
             if(d) {
-                rotatePlayer(-dt, normalize(right + up));
+                rotatePlayer(PLAYERROTSPEED * -dt, normalize(right + up));
             }
             else if(a) {
-                rotatePlayer(-dt, normalize(right - up));
+                rotatePlayer(PLAYERROTSPEED * -dt, normalize(right - up));
             }
             else {
-                rotatePlayer(-dt, right);
+                rotatePlayer(PLAYERROTSPEED  * -dt, right);
             }
         }
         else if(s) {
             if(d) {
-                rotatePlayer(dt, normalize(right - up));
+                rotatePlayer(PLAYERROTSPEED  * dt, normalize(right - up));
             }
             else if(a) {
-                rotatePlayer(dt, normalize(right + up));
+                rotatePlayer(PLAYERROTSPEED  * dt, normalize(right + up));
             }
             else {
-                rotatePlayer(dt, right);
+                rotatePlayer(PLAYERROTSPEED  * dt, right);
             }
         }
         else if(d)
-            rotatePlayer(-dt, up);
+            rotatePlayer(PLAYERROTSPEED  * -dt, up);
         else if(a)
-            rotatePlayer(dt, up);
-        pos = 15.f * fwd;
+            rotatePlayer(PLAYERROTSPEED  * dt, up);
+        pos = PLAYERPOSHEIGHT * fwd;
         hitbox.center = pos;
-        height = 1;
+        height = 0.43;
     }
 
     void playerRotation(GLFWwindow *window, double xpos, double ypos) {
@@ -102,13 +104,6 @@ public:
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
         mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) - PI/4.0f, vec3(0, 0, 1));
-    }
-
-    mat4 camera()
-    {
-        // The eye is above the player, the center is the center of the world, and up is the up vector of the player
-        
-        return lookAt(40.f * fwd, vec3(0, 0, 0), up);
     }
 
     Projectile spawnProjectile() {

@@ -7,8 +7,9 @@
 using namespace std;
 using namespace glm;
 
-#define ARMSCALE 0.7f
+#define ARMSCALE 0.3f
 #define PI 3.14159265f
+#define ARMROTSPEED 0.6f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -71,31 +72,31 @@ public:
         // either about right, up, right + up, or right - up given a combination of wasd
         if(w) {
             if(d) {
-                rotatePlayer(-dt, normalize(right + up));
+                rotatePlayer(ARMROTSPEED * -dt, normalize(right + up));
             }
             else if(a) {
-                rotatePlayer(-dt, normalize(right - up));
+                rotatePlayer(ARMROTSPEED * -dt, normalize(right - up));
             }
             else {
-                rotatePlayer(-dt, right);
+                rotatePlayer(ARMROTSPEED * -dt, right);
             }
         }
         else if(s) {
             if(d) {
-                rotatePlayer(dt, normalize(right - up));
+                rotatePlayer(ARMROTSPEED * dt, normalize(right - up));
             }
             else if(a) {
-                rotatePlayer(dt, normalize(right + up));
+                rotatePlayer(ARMROTSPEED * dt, normalize(right + up));
             }
             else {
-                rotatePlayer(dt, right);
+                rotatePlayer(ARMROTSPEED * dt, right);
             }
         }
         else if(d){
-            rotatePlayer(-dt, up);
+            rotatePlayer(ARMROTSPEED * -dt, up);
         }
         else if(a){
-            rotatePlayer(dt, up);
+            rotatePlayer(ARMROTSPEED * dt, up);
         }
 
         if(space){

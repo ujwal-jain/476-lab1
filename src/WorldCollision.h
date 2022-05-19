@@ -42,7 +42,7 @@ public:
             grid.push_back(temp);
         }
 
-        //`
+        // rasterization of faces
         for (tuple<Vertex2D, Vertex2D, Vertex2D> face: faces) {
             Vertex2D v1 = get<0>(face);
             Vertex2D v2 = get<1>(face);
@@ -81,6 +81,7 @@ public:
         t = (int)mapToRange(t, 0, 3.14159, 0, gridSize - 1);
         p = (int)mapToRange(p, -1.5708, 1.57078, 0, gridSize - 1);
 
+        printf("%f %f\n", playerHeight, grid[t][p]);
         if (playerHeight <= grid[t][p]) return true;
         return false;
     }
