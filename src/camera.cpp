@@ -39,24 +39,11 @@ public:
     }
 
     mat4 playerCam(vec3 playerPos) {
-//        printf("%f %f %f\n", camCenter.x, camCenter.y, camCenter.z);
-//        printf("%f %f %f\n", camUp.x, camUp.y, camUp.z);
-//        printf("%f %f %f\n", camFwd.x, camFwd.y, camFwd.z);
         return lookAt(playerPos - 12.f * camUp + 15.f * camFwd, playerPos, camFwd);
     }
 
-//    mat4 camera() {
-//        return lookAt(camCenter - 3.f * camUp + 4.5f * camFwd, camCenter, camFwd);
-//        vec3 xOffset = camRight * camOffset.x;
-//        vec3 yOffset = camUp * camOffset.y;
-//        realPos = camCenter + xOffset + yOffset;
-//        return lookAt(realPos, vec3(0), camUp);
-//
-//    }
-//
     void update(float frametime, vec3 newPos, vec3 newUp, vec3 newRight, vec3 newFwd) {
         camCenter = newPos * 7.0f / 3.0f;
-//        camCenter = newPos;
         camRight = newRight;
         camUp = newUp;
         camFwd = newFwd;
@@ -66,7 +53,6 @@ public:
                 camVelocity.y = -sqrt(abs(camOffset.y)) * frametime;
             else
                 camVelocity.y = sqrt(abs(camOffset.y)) * frametime;
-//            camVelocity.y = 0;
         }
         else if(w)
             camVelocity.y = CAMSPEED * frametime;
@@ -78,8 +64,6 @@ public:
                 camVelocity.x = -sqrt(abs(camOffset.x)) * frametime;
             else
                 camVelocity.x = sqrt(abs(camOffset.x)) * frametime;
-//            camVelocity.x = sqrt(abs(camOffset.x)) * frametime;
-//            camVelocity.x = 0
         else if(a)
             camVelocity.x = CAMSPEED * frametime;
         else if(d)

@@ -128,8 +128,6 @@ public:
         mouseDirX = -(xposFloat - (width / 2));
          mouseDirY = -(yposFloat - (height / 2));
 
-        // cout << mouseDirY << "\n";
-
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
@@ -151,28 +149,7 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        vec2 movementOffset = vec2(0, 0);
-        if(w)
-            movementOffset.y += 1;
-        if(s)
-            movementOffset.y -= 1;
-        if(a)
-            movementOffset.x += 1;
-        if(d)
-            movementOffset.x -= 1;
-        vec3 horOffset = movementOffset.x * right;
-        vec3 verOffset= movementOffset.y * up;
-        vec3 offset;
-        if(movementOffset == vec2(0, 0))
-            offset = vec3(0, 0, 0);
-        else
-            offset = normalize(horOffset + verOffset);
-        printf("%f %f %f\n", offset.x, offset.y, offset.z);
-        printf("%f %f %f\n", right.x, right.y, right.z);
-        printf("%f %f %f\n", up.x, up.y, up.z);
-        pDir = normalize(pDir);
-//        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) + offset, 10, vec3(0.2f, 0.8f, 0.9f));
-        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) , 10, vec3(0.2f, 0.8f, 0.9f));
+        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) , 15, vec3(0.2f, 0.8f, 0.9f));
     }
 
 private:

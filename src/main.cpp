@@ -312,7 +312,6 @@ public:
         worldOBJ->loadMesh(resourceDirectory + "/world-v4.obj", (string *) "../resources/");
         worldOBJ->resize();
         worldOBJ->init();
-        worldCollision.get3dGrid(worldOBJ);
         worldCollision.getFaces(worldOBJ);
 
         // Load Materials
@@ -369,7 +368,6 @@ public:
         asteroidOBJ->init();
     }
     void SetMaterial(shared_ptr<Program> curS, int i) {
-
     	switch (i) {
     		case 0:
     			glUniform3f(curS->getUniform("MatAmb"), 0.089, 0.035, 0.013);
@@ -441,8 +439,6 @@ public:
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         // Enable z-buffer test.
         glEnable(GL_DEPTH_TEST);
-//        glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-        //glDisable(GL_DEPTH_TEST);
         // Initialize the GLSL program.
         prog = std::make_shared<Program>();
         prog->setVerbose(true);
@@ -463,7 +459,6 @@ public:
         prog->addAttribute("vertNor");
         prog->addAttribute("vertTex");
         prog->addUniform("Opacity");
-        prog->addUniform("Height");
         prog->addUniform("Aim");
 
         hud = std::make_shared<Program>();
@@ -485,7 +480,6 @@ public:
         hud->addAttribute("vertNor");
         hud->addAttribute("vertTex");
         hud->addUniform("Opacity");
-        hud->addUniform("Height");
 
         texture = std::make_shared<Texture>();
 		texture->setFilename(resourceDirectory + "/alpha.bmp");
@@ -555,27 +549,19 @@ public:
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float) height;
 
-
-//        vector<float> playerstate = player.getState();
         camera.update(frametime, player.pos, player.up, player.right, player.fwd);
 
         glm::mat4 V, M, P; //View, Model and Perspective matrix
         // player cam
-            V = lookAt(vec3(0, 0, -5), vec3(0, 0, 0), vec3(0, 1, 0));
-
-            // top down
-            P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
-                                 1000.0f); //so much type casting... GLM metods are quite funny ones
-//        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
-            P = glm::ortho(-1, 1, -1, 1);
+        V = lookAt(vec3(0, 0, -20), vec3(0, 0, 0), vec3(0, 1, 0));
+        P = glm::ortho(-1, 1, -1, 1);
 
         hud->bind();
         glUniformMatrix4fv(hud->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(hud->getUniform("V"), 1, GL_FALSE, &V[0][0]);
 
-        float offset = 2.5f;
         for (int i = 0; i < player.health; i++) {
-            M = translate(mat4(1.0f), vec3(0, 0, 0))  * scale(mat4(1.0f), vec3(1, 1, 1));
+            M = scale(mat4(1.0f), vec3(1, 1, 1));
             glUniformMatrix4fv(hud->getUniform("M"), 1, GL_FALSE, &M[0][0]);
             hpbarOBJ->draw(hud, GL_FALSE, hpbarMaterialLoader.materials);
         }
@@ -597,9 +583,6 @@ public:
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
         float aspect = width / (float) height;
 
-
-//        vector<float> playerstate = player.getState();
-//        player.updateLocation(frametime);
         vec3 nextPos = player.getNextLocation(frametime);
         if(worldCollision.isLocationValid(nextPos, player.height)) {
             player.updateLocation();
@@ -623,12 +606,10 @@ public:
          else
             P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
                                  1000.0f); //so much type casting... GLM metods are quite funny ones
-//        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
         M = glm::mat4(1.f);
 
         prog->bind();
         glUniform1f(prog->getUniform("Aim"), 0);
-        glUniform1f(prog->getUniform("Height"), -1.f);
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -636,9 +617,6 @@ public:
 
         glBindVertexArray(VertexArrayID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, Texture);
 
         M = player.getModel();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -651,9 +629,6 @@ public:
         glUniform1f(prog->getUniform("Aim"), 0);
 
 
-    //    if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-    //        cout << "Player Collided!!! " << "height: " << player.height << endl;
-    //    }
        SetMaterial(prog, 1);
 
         // draw player projectiles
@@ -729,7 +704,6 @@ public:
             M = enemies2[i].getModel();
             glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
             enemyOBJ->draw(prog, GL_FALSE, enemyMaterialLoader2.materials);
-//            enemyOBJ->draw(prog, GL_FALSE, enemyMaterialLoader.materials);
         }
 
         SetMaterial(prog, 2);
@@ -771,40 +745,8 @@ public:
             gameDone = true;
         }
 
-        // glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        // glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        // glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        // glUniform3fv(prog->getUniform("campos"), 1, &arm.pos[0]);
-
-        // glBindVertexArray(VertexArrayID);
-        // //actually draw from vertex 0, 3 vertices
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-        //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
-
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, Texture);
-
-//        M = arm.getModel();
-//        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-//        armOBJ->draw(prog, GL_FALSE, armMaterialLoader.materials);
-
-        // Draw the box using GLSL.
-
-        // //send the matrices to the shaders
-        // glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        // glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        // glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        // glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
-
-        // glBindVertexArray(VertexArrayID);
-        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
-
-        // glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, Texture);
-
         M = world.getModel();
 
-        glUniform1f(prog->getUniform("Height"), worldCollision.getHeight(player.fwd));
         glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
 
@@ -861,19 +803,12 @@ public:
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
         drawScene(isMainView ? false : true);
-//
-//        // top down cam
-//        glClear(GL_DEPTH_BUFFER_BIT);
-//        glViewport(0, height - height / 6, width / 6, height / 6);
-//        // Clear framebuffer.
-//        drawScene(isMainView ? true : false);
 
-//        cout << player.pos.x << ", " << player.pos.y << ", " << player.pos.z << endl;
-
-
-//        glClear(GL_DEPTH_BUFFER_BIT);
-//        glViewport(width - (width / 6) - 64, height - height / 15, width / 6, height / 15);
-//        drawHUD();
+        // top down cam
+        glClear(GL_DEPTH_BUFFER_BIT);
+        glViewport(0, height - height / 6, width / 6, height / 6);
+        // Clear framebuffer.
+        drawScene(isMainView ? true : false);
     }
 };
 

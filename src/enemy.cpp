@@ -31,7 +31,6 @@ public:
     boundingsphere hitbox;
 
     Enemy(vec3 forward) {
-//        forward = vec3(1, 0, 0);
         pos = ENEMYPOSHEIGHT * forward;
         printf("%f %f %f\n", pos.x, pos.y, pos.z);
 
@@ -73,7 +72,6 @@ public:
                * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                // height above world
                * translate(mat4(1), vec3(0, 0, -1 * ENEMYPOSHEIGHT))
-//               * translate(mat4(1), vec3(0, 0, -14))
                // player rotation about mouse
                * projectileRot
                // rotation to orient the player correctly
@@ -90,7 +88,6 @@ public:
 
         right = cross(fwd, up);
         projectileRot = projectileRot * rotate(mat4(1), ROTATIONSPEED * ftime, vec3(0, 0, 1));
-        // rotation = rotation * rotate(mat4(1), ROTATIONSPEED * ftime, vec3(0, 0, 1));
 
         if(spawnTime == 0) {
             spawnTime = rand() % PROJSPAWN + PROJSPAWN / 2;

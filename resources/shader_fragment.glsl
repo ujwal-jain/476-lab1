@@ -11,7 +11,6 @@ uniform vec3 MatDif;
 uniform vec3 MatSpec;
 uniform float MatShine;
 uniform float Opacity;
-uniform float Height;
 uniform float Aim;
 
 float getdiff(vec3 lp) {
@@ -48,9 +47,5 @@ void main()
 
         vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
         color = vec4(color3, Opacity);
-        //
-        //    if(Height != -1) {
-        //        color.g *= Height;
-        //    }
     }
 }
