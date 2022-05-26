@@ -4,7 +4,6 @@
 #include "boundingsphere.h"
 
 #define PROJSPAWNRADIUS 16.0f
-#define PROJSPAWNRADIUS2 (PROJSPAWNRADIUS*PROJSPAWNRADIUS)
 #define PROJRADIUS 0.3f
 #define PROJSCALE 0.12f
 #define PROJROTSPEED 1.2f

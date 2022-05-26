@@ -23,10 +23,10 @@ public:
 	unsigned int *textureIDs = NULL;
     std::vector<float> *posBuf = NULL;
     std::vector<unsigned int> *eleBuf = NULL;
-
+    int obj_count = 0;
 
 private:
-	int obj_count = 0;
+
 	std::vector<float> *norBuf = NULL;
 	std::vector<float> *texBuf = NULL;
 	unsigned int *materialIDs = NULL;

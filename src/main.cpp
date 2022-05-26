@@ -83,7 +83,7 @@ public:
 
     vector<Projectile> player_projectiles;
     vector<Projectile> enemy_projectiles;
-    Player player;
+    Player player = Player();
     Arm arm;
     World world;
     Camera camera;
@@ -284,6 +284,7 @@ public:
         worldOBJ->resize();
         worldOBJ->init();
         worldCollision.get3dGrid(worldOBJ);
+        worldCollision.getFaces(worldOBJ);
 
         // Load Materials
         worldMaterialLoader.readMaterialFile();
@@ -580,6 +581,8 @@ public:
             enemies.emplace_back(forward);
         }
 
+        enemies.emplace_back(vec3( 0.0876223, -0.900436, 0.269669));
+
         game_stats.push_back(player.health);
         game_stats.push_back(enemies.size());
     }
@@ -640,7 +643,11 @@ public:
 
 
 //        vector<float> playerstate = player.getState();
-        player.updateLocation(frametime);
+//        player.updateLocation(frametime);
+        vec3 nextPos = player.getNextLocation(frametime);
+        if(worldCollision.nextLocationValid(nextPos, player.height)) {
+            player.updateLocation();
+        }
         camera.update(frametime, player.pos, player.up, player.right, player.fwd);
         arm.updateLocation(frametime);
 
@@ -810,9 +817,7 @@ public:
 
         worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
 
-
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &P[0][0]);
-
 
         M = player.getModelHealth();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);

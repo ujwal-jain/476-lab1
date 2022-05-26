@@ -28,6 +28,8 @@ public:
     float height;
     int health;
     boundingsphere hitbox;
+    float angle;
+    vec3 axis;
 
     Player()
     {
@@ -38,7 +40,7 @@ public:
         fwd = vec3(0, 0, -1);
         up = vec3(0, 1, 0);
         right = cross(fwd, up);
-        height = 0.3f;
+        height = 0.43f;
         hitbox = boundingsphere(pos, 0.5f);
         health = 10;
     }
@@ -73,38 +75,63 @@ public:
                * scale(mat4(1), vec3(PLAYERSCALE, PLAYERSCALE, health * PLAYERSCALE * 0.125));
     }
 
-    void updateLocation(float dt)
+    void updateLocation()
+    {
+        if(angle != 0 && axis != vec3(0, 0, 0))
+            rotatePlayer(angle, axis);
+        pos = PLAYERPOSHEIGHT * fwd;
+        hitbox.center = pos;
+    }
+
+    vec3 getNextLocation(float dt)
     {
         // either about right, up, right + up, or right - up given a combination of wasd
+        angle = 0;
+        axis = vec3(0, 0, 0);
         if(w) {
             if(d) {
-                rotatePlayer(PLAYERROTSPEED * -dt, normalize(right + up));
+                angle = PLAYERROTSPEED * -dt;
+                axis = normalize(right + up);
             }
             else if(a) {
-                rotatePlayer(PLAYERROTSPEED * -dt, normalize(right - up));
+                angle = PLAYERROTSPEED * -dt;
+                axis = normalize(right - up);
             }
             else {
-                rotatePlayer(PLAYERROTSPEED  * -dt, right);
+                angle = PLAYERROTSPEED * -dt;
+                axis = normalize(right);
             }
         }
         else if(s) {
             if(d) {
-                rotatePlayer(PLAYERROTSPEED  * dt, normalize(right - up));
+                angle = PLAYERROTSPEED * dt;
+                axis = normalize(right - up);
             }
             else if(a) {
-                rotatePlayer(PLAYERROTSPEED  * dt, normalize(right + up));
+                angle = PLAYERROTSPEED * dt;
+                axis = normalize(right + up);
             }
             else {
-                rotatePlayer(PLAYERROTSPEED  * dt, right);
+                angle = PLAYERROTSPEED * dt;
+                axis = normalize(right);
             }
         }
-        else if(d)
-            rotatePlayer(PLAYERROTSPEED  * -dt, up);
-        else if(a)
-            rotatePlayer(PLAYERROTSPEED  * dt, up);
-        pos = PLAYERPOSHEIGHT * fwd;
-        hitbox.center = pos;
-        height = 0.43;
+        else if(d) {
+            angle = PLAYERROTSPEED * -dt;
+            axis = normalize(up);
+        }
+        else if(a) {
+            angle = PLAYERROTSPEED * dt;
+            axis = normalize(up);
+        }
+        if(angle == 0 && axis == vec3(0, 0, 0)) {
+            return pos;
+        }
+        else {
+            vec4 fwd4 = vec4(fwd, 1) * rotate(mat4(1), angle, axis);
+            vec3 fwd3 = normalize(vec3(fwd4));
+            return PLAYERPOSHEIGHT * fwd3;
+        }
     }
 
     void playerRotation(GLFWwindow *window, double xpos, double ypos) {
@@ -143,14 +170,15 @@ public:
 private:
 
     // rotates the player an angle around a given world axis and updates fwd, up, right vectors
-    void rotatePlayer(float angle, vec3 axis) {
-        mat4 R = rotate(mat4(1), angle, axis);
-        mat4 Ri = rotate(mat4(1), -angle, axis);
+    mat4 rotatePlayer(float t, vec3 a) {
+        mat4 R = rotate(mat4(1), t, a);
+        mat4 Ri = rotate(mat4(1), -t, a);
         vec4 fwd4 = vec4(fwd, 1) * R;
         fwd = normalize(vec3(fwd4));
         vec4 up4 = vec4(up, 1) * R;
         up = normalize(vec3(up4));
         right = cross(fwd, up);
         rotation = Ri * rotation;
+        return R;
     }
 };

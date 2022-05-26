@@ -23,6 +23,116 @@ public:
     float globalMaxX = 0;
     float globalMaxY = 0;
 
+    class Face {
+    public:
+        vec3 v1, v2, v3;
+        // ax + by + cz + d = 0
+        vec4 e1Plane, e2Plane, e3Plane;
+        vec3 centerPoint;
+        float h;
+
+        Face(vec3 v1, vec3 v2, vec3 v3) {
+            h = (length(v1) + length(v2) + length(v3)) / 3;
+            v1 = normalize(v1);
+            v2 = normalize(v2);
+            v3 = normalize(v3);
+            this->v1= normalize(v1);
+            this->v2= normalize(v2);
+            this->v3= normalize(v3);
+
+            e1Plane = vec4(cross(v2 - v1, v1), 1);
+            e1Plane.w = e1Plane.x * v1.x + e1Plane.y * v1.y + e1Plane.z * v1.z;
+            e2Plane = vec4(cross(v3 - v2, v2), 1);
+            e2Plane.w = e2Plane.x * v2.x + e2Plane.y * v2.y + e2Plane.z * v2.z;
+            e3Plane = vec4(cross(v1 - v3, v3), 1);
+            e3Plane.w = e3Plane.x * v3.x + e3Plane.y * v3.y + e1Plane.z * v3.z;
+
+            centerPoint = ((v1 + v2 + v3) / 3.0f);
+
+            if(!testPlane(e1Plane, centerPoint)) {
+                e1Plane = vec4(cross(v1, v2 - v1), 1);
+                e1Plane.w = e1Plane.x * v1.x + e1Plane.y * v1.y + e1Plane.z * v1.z;
+            }
+            if(!testPlane(e2Plane, centerPoint)) {
+                e2Plane = vec4(cross(v2, v3 - v2), 1);
+                e2Plane.w = e2Plane.x * v2.x + e2Plane.y * v2.y + e1Plane.z * v2.z;
+            }
+            if(!testPlane(e3Plane, centerPoint)) {
+                e3Plane = vec4(cross(v3, v1 - v3), 1);
+                e3Plane.w = e3Plane.x * v3.x + e3Plane.y * v3.y + e3Plane.z * v3.z;
+            }
+        }
+
+        bool pointInFace(vec3 point) {
+            return testPlane(e1Plane, point) && testPlane(e2Plane, point) && testPlane(e3Plane, point);
+        }
+
+        bool testPlane(vec4 plane, vec3 point) {
+            return plane.x * point.x + plane.y * point.y + plane.z * point.z > 0;
+        }
+    };
+
+    std::vector<Face> triFaces;
+
+    void getFaces(shared_ptr<Shape> worldOBJ) {
+        // identify different faces from eleBuf
+        for(int sidx = 0; sidx < worldOBJ->obj_count; sidx++) {
+            for (int idx = 0; idx < worldOBJ->eleBuf[sidx].size() / 3; idx++) {
+//            for (int idx = 0; idx < 1; idx++) {
+                int v1 = worldOBJ->eleBuf[sidx][idx * 3 + 0];
+                int v2 = worldOBJ->eleBuf[sidx][idx * 3 + 1];
+                int v3 = worldOBJ->eleBuf[sidx][idx * 3 + 2];
+
+                vec3 vert1, vert2, vert3;
+                vert1.x = worldOBJ->posBuf[sidx][v1 * 3 + 0];
+                vert1.y = worldOBJ->posBuf[sidx][v1 * 3 + 1];
+                vert1.z = worldOBJ->posBuf[sidx][v1 * 3 + 2];
+                vert2.x = worldOBJ->posBuf[sidx][v2 * 3 + 0];
+                vert2.y = worldOBJ->posBuf[sidx][v2 * 3 + 1];
+                vert2.z = worldOBJ->posBuf[sidx][v2 * 3 + 2];
+                vert3.x = worldOBJ->posBuf[sidx][v3 * 3 + 0];
+                vert3.y = worldOBJ->posBuf[sidx][v3 * 3 + 1];
+                vert3.z = worldOBJ->posBuf[sidx][v3 * 3 + 2];
+                triFaces.emplace_back(vert1, vert2, vert3);
+            }
+        }
+    }
+
+    void testFace() {
+//        vec3 v1 = vec3(0.2, -0.3, -1);
+//        vec3 v3 = vec3(-0.2, -0.3, -1);
+//        vec3 v2 = vec3(0, 0.3, -1);
+//
+//        Face face = Face(v1, v2, v3);
+//        printFace(face);
+//        cout << face.pointInFace(vec3(0, 0, 13)) << endl;
+    }
+
+    bool nextLocationValid(vec3 pos, float height) {
+        float mHeight = 0;
+        for(Face face: triFaces) {
+            if (face.h < 0.5 && face.pointInFace(pos)) {
+                mHeight = max({mHeight, face.h});
+            }
+        }
+        return height >= mHeight;
+
+    }
+
+    void printFace(Face face) {
+        cout << "v1: " << face.v1.x << ", " << face.v1.y << ", " << face.v1.z << " | ";
+        cout << "v2: " << face.v2.x << ", " << face.v2.y << ", " << face.v2.z << " | ";
+        cout << "v3: " << face.v3.x << ", " << face.v3.y << ", " << face.v3.z << endl;
+
+        cout << "e1: " << face.e1Plane.x << ", " << face.e1Plane.y << ", " << face.e1Plane.z << ", " << face.e1Plane.w << endl;
+        cout << "e2: " << face.e2Plane.x << ", " << face.e2Plane.y << ", " << face.e2Plane.z << ", " << face.e2Plane.w << endl;
+        cout << "e3: " << face.e3Plane.x << ", " << face.e3Plane.y << ", " << face.e3Plane.z << ", " << face.e3Plane.w << endl;
+    }
+
+    void printVec(vec3 v) {
+        cout << "v: " << v.x << ", " << v.y << ", " << v.z << endl;
+    }
+
     /* Create a 3d grid representing faces in the 3d Object
      * input: shared pointer -> Shape
      * output: N/A
@@ -38,7 +148,6 @@ public:
             int v3 = worldOBJ->eleBuf[0][idx * 3 + 2];
 
             faces.push_back(make_tuple(convertTo2D(worldOBJ, v1), convertTo2D(worldOBJ, v2), convertTo2D(worldOBJ, v3)));
-//            faces3D.push_back(make_tuple(WorldVertex(v1), WorldVertex(v2), WorldVertex(v3)));
         }
 
         // init grid with NULL values
@@ -196,4 +305,6 @@ private:
         return (((oldValue - oldMin) * NewRange) / OldRange) + (newMin);
     }
 };
+
+
 #endif
