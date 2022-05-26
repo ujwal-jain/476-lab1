@@ -2,6 +2,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
+#include "particleSys.h"
+#include <iostream>
 
 #define PROJSPAWNRADIUS 13.6f
 #define PROJSPAWNRADIUS2 (PROJSPAWNRADIUS*PROJSPAWNRADIUS)
@@ -26,8 +28,10 @@ public:
     boundingsphere hitbox;
     int lifespan;
     int graceTimeLeft;
+    particleSys *thePartSystem;
+    vec3 color;
 
-    Projectile(vec3 pos, vec3 dir, int gracePeriodTime)
+    Projectile(vec3 pos, vec3 dir, int gracePeriodTime, vec3 partColor)
     {
         this->pos = pos;
         rot = mat4(1);
@@ -36,9 +40,29 @@ public:
         rotAxis = cross(pos, dir);
         hitbox = boundingsphere(pos, PROJRADIUS);
         // 360 is entire rotation + a bit
-        lifespan = 500;
+        lifespan = 750;
 
         graceTimeLeft = gracePeriodTime;
+        initParticleSys(partColor);
+        color = partColor;
+        
+    }
+
+    void initParticleSys(vec3 partColor){
+        // cout << color.x <<"\n";
+        // thePartSystem = new particleSys(pos, vec3(0.2f, 0.8f, 0.9f));
+        // thePartSystem = new particleSys(pos, color);
+        thePartSystem = new particleSys(pos, partColor);
+
+        // thePartSystem = new particleSys(pos, vec3(color.x, color.y, color.z));
+
+		thePartSystem->gpuSetup();
+    }
+
+    void renderParticleSys(mat4 V, shared_ptr<Program> partProg){
+        thePartSystem->setCamera(V);
+        thePartSystem->drawMe(partProg);
+		thePartSystem->update(pos);
     }
 
     mat4 getModel() const {
