@@ -11,9 +11,9 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #define PLANE_SIZE 30
 #define HPL_SIZE (PLANE_SIZE / 2.f)
 #endif
-#define NUM_ENEMIES 5
+#define NUM_ENEMIES 3
 
-#include "stb_image.h"
+// #include "stb_image.h"
 #include "GLSL.h"
 #include "Program.h"
 #include "MatrixStack.h"
@@ -25,6 +25,9 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "world.cpp"
 #include "projectile.cpp"
 #include "camera.cpp"
+// #include "particleSys.h"
+#include "Texture.h"
+
 
 #include "tiny_obj_loader.h"
 #include "WindowManager.h"
@@ -45,8 +48,7 @@ shared_ptr<Shape> projectileOBJ;
 shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
 shared_ptr<Shape> hpbarOBJ;
-
-
+shared_ptr<Shape> enemyOBJ;
 
 double get_last_elapsed_time()
 {
@@ -73,7 +75,24 @@ public:
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
 
     // Our shader program
-    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm, hud;
+    std::shared_ptr<Program> prog, hud;
+    MaterialLoader enemyMaterialLoader1 = MaterialLoader("../resources/enemy1.mtl");
+    MaterialLoader enemyMaterialLoader2 = MaterialLoader("../resources/enemy2.mtl");
+
+    
+    // Our shader program for particles
+	std::shared_ptr<Program> partProg;
+    //the partricle system
+	particleSys *thePartSystem;
+
+    //PARTICLE SYSTEM
+	// OpenGL handle to texture data used in particle
+	std::shared_ptr<Texture> texture;
+	bool keyToggles[256] = { false };
+	//some particle variables
+    
+	float t = 0.0f; //reset in init
+	float h = 0.01f;
 
     // Contains vertex information for OpenGL
     GLuint VertexArrayID;
@@ -83,16 +102,18 @@ public:
 
     vector<Projectile> player_projectiles;
     vector<Projectile> enemy_projectiles;
+    
     Player player;
     Arm arm;
     World world;
     Camera camera;
     vector<Enemy> enemies;
+    vector<Enemy> enemies2;
     vector<int> game_stats;
     bool gameDone = false;
 
     //texture data
-    GLuint Texture;
+    GLuint Texture1;
     GLuint Texture2;
     GLuint TextureSlime;
     GLuint TextureSlime2;
@@ -175,7 +196,6 @@ public:
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
-
     }
 
     // callback for the mouse when clicked move the triangle when helper functions
@@ -291,6 +311,9 @@ public:
         armMaterialLoader.readMaterialFile();
         asteroidMaterialLoader.readMaterialFile();
         hpbarMaterialLoader.readMaterialFile();
+        fireballMaterialLoader.readMaterialFile();
+        enemyMaterialLoader1.readMaterialFile();
+        enemyMaterialLoader2.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
         playerOBJ->loadMesh(resourceDirectory + "/player-character.obj", (string *) "../resources/");
@@ -301,6 +324,10 @@ public:
         hpbarOBJ->loadMesh(resourceDirectory + "/hpbar3.obj", (string *) "../resources/");
         hpbarOBJ->resize();
         hpbarOBJ->init();
+        enemyOBJ = make_shared<Shape>();
+        enemyOBJ->loadMesh(resourceDirectory + "/enemy.obj", (string *) "../resources/");
+        enemyOBJ->resize();
+        enemyOBJ->init();
 
         armOBJ = make_shared<Shape>();
         armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
@@ -308,7 +335,7 @@ public:
         armOBJ->init();
 
         projectileOBJ = make_shared<Shape>();
-        projectileOBJ->loadMesh(resourceDirectory + "/fireball.obj");
+        projectileOBJ->loadMesh(resourceDirectory + "/fireball.obj", (string *) "../resources/");
         projectileOBJ->resize();
         projectileOBJ->init();
 
@@ -320,113 +347,176 @@ public:
         int width, height, channels;
         char filepath[1000];
 
-        //texture 1
-        string str = resourceDirectory + "/water.jpeg";
-        strcpy(filepath, str.c_str());
-        unsigned char *data = stbi_load(filepath, &width, &height, &channels, 4);
-        glGenTextures(1, &Texture);
-        //glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // //texture 1
+        // string str = resourceDirectory + "/alpha.bmp";
+        // strcpy(filepath, str.c_str());
+        // unsigned char *data = stbi_load(filepath, &width, &height, &channels, 4);
+        // glGenTextures(1, &Texture1);
+        // //glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, Texture1);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        // glGenerateMipmap(GL_TEXTURE_2D);
 
-        //texture 2
-        str = resourceDirectory + "/night.jpg";
-        strcpy(filepath, str.c_str());
-        data = stbi_load(filepath, &width, &height, &channels, 4);
-        glGenTextures(1, &Texture2);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, Texture2);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // //texture 2
+        // str = resourceDirectory + "/night.jpg";
+        // strcpy(filepath, str.c_str());
+        // data = stbi_load(filepath, &width, &height, &channels, 4);
+        // glGenTextures(1, &Texture2);
+        // glActiveTexture(GL_TEXTURE1);
+        // glBindTexture(GL_TEXTURE_2D, Texture2);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        // glGenerateMipmap(GL_TEXTURE_2D);
 
-        //texture slime
-        str = resourceDirectory + "/slime.jpeg";
-        strcpy(filepath, str.c_str());
-        data = stbi_load(filepath, &width, &height, &channels, 4);
-        glGenTextures(1, &TextureSlime);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, TextureSlime);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // //texture slime
+        // str = resourceDirectory + "/slime.jpeg";
+        // strcpy(filepath, str.c_str());
+        // data = stbi_load(filepath, &width, &height, &channels, 4);
+        // glGenTextures(1, &TextureSlime);
+        // glActiveTexture(GL_TEXTURE2);
+        // glBindTexture(GL_TEXTURE_2D, TextureSlime);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        // glGenerateMipmap(GL_TEXTURE_2D);
 
-        //texture slime when hit
-        str = resourceDirectory + "/slimehit.jpeg";
-        strcpy(filepath, str.c_str());
-        data = stbi_load(filepath, &width, &height, &channels, 4);
-        glGenTextures(1, &TextureSlime2);
-        glActiveTexture(GL_TEXTURE3);
-        glBindTexture(GL_TEXTURE_2D, TextureSlime2);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        // //texture slime when hit
+        // str = resourceDirectory + "/slimehit.jpeg";
+        // strcpy(filepath, str.c_str());
+        // data = stbi_load(filepath, &width, &height, &channels, 4);
+        // glGenTextures(1, &TextureSlime2);
+        // glActiveTexture(GL_TEXTURE3);
+        // glBindTexture(GL_TEXTURE_2D, TextureSlime2);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        // glGenerateMipmap(GL_TEXTURE_2D);
 
         //[TWOTEXTURES]
         //set the 2 textures to the correct samplers in the fragment shader:
-        GLuint Tex1Location = glGetUniformLocation(prog->pid, "tex");//tex, tex2... sampler in the fragment shader
-        GLuint Tex2Location = glGetUniformLocation(prog->pid, "tex2");
-        // Then bind the uniform samplers to texture units:
-        glUseProgram(prog->pid);
-        glUniform1i(Tex1Location, 0);
-        glUniform1i(Tex2Location, 1);
+        // GLuint Tex1Location = glGetUniformLocation(partProg->pid, "alphaTexture");//tex, tex2... sampler in the fragment shader
+        // // GLuint Tex2Location = glGetUniformLocation(prog->pid, "tex2");
+        // // Then bind the uniform samplers to texture units:
+        // glUseProgram(partProg->pid);
+        // glUniform1i(Tex1Location, 0);
+        // glUniform1i(Tex2Location, 1);
 
-        //PLAYER
-        Tex1Location = glGetUniformLocation(pplayer->pid, "tex");//tex, tex2... sampler in the fragment shader
-        Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
-        // Then bind the uniform samplers to texture units:
-        glUseProgram(pplayer->pid);
-        glUniform1i(Tex1Location, 0);
-        glUniform1i(Tex2Location, 1);
+        // //PLAYER
+        // Tex1Location = glGetUniformLocation(pplayer->pid, "tex");//tex, tex2... sampler in the fragment shader
+        // Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
+        // // Then bind the uniform samplers to texture units:
+        // glUseProgram(pplayer->pid);
+        // glUniform1i(Tex1Location, 0);
+        // glUniform1i(Tex2Location, 1);
 
-        //ARM
-        Tex1Location = glGetUniformLocation(parm->pid, "tex");//tex, tex2... sampler in the fragment shader
-        Tex2Location = glGetUniformLocation(parm->pid, "tex2");
-        // Then bind the uniform samplers to texture units:
-        glUseProgram(parm->pid);
-        glUniform1i(Tex1Location, 0);
-        glUniform1i(Tex2Location, 1);
+        // //ARM
+        // Tex1Location = glGetUniformLocation(parm->pid, "tex");//tex, tex2... sampler in the fragment shader
+        // Tex2Location = glGetUniformLocation(parm->pid, "tex2");
+        // // Then bind the uniform samplers to texture units:
+        // glUseProgram(parm->pid);
+        // glUniform1i(Tex1Location, 0);
+        // glUniform1i(Tex2Location, 1);
 
-        //PROJECTILE
-        Tex1Location = glGetUniformLocation(pprojectile->pid, "tex");//tex, tex2... sampler in the fragment shader
-        Tex2Location = glGetUniformLocation(pprojectile->pid, "tex2");
-        // Then bind the uniform samplers to texture units:
-        glUseProgram(pprojectile->pid);
-        glUniform1i(Tex1Location, 0);
-        glUniform1i(Tex2Location, 1);
+        // //PROJECTILE
+        // Tex1Location = glGetUniformLocation(pprojectile->pid, "tex");//tex, tex2... sampler in the fragment shader
+        // Tex2Location = glGetUniformLocation(pprojectile->pid, "tex2");
+        // // Then bind the uniform samplers to texture units:
+        // glUseProgram(pprojectile->pid);
+        // glUniform1i(Tex1Location, 0);
+        // glUniform1i(Tex2Location, 1);
 
-        Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
-        Tex2Location = glGetUniformLocation(psky->pid, "tex2");
-        // Then bind the uniform samplers to texture units:
-        glUseProgram(psky->pid);
-        glUniform1i(Tex1Location, 0);
-        glUniform1i(Tex2Location, 1);
+        // Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
+        // Tex2Location = glGetUniformLocation(psky->pid, "tex2");
+        // // Then bind the uniform samplers to texture units:
+        // glUseProgram(psky->pid);
+        // glUniform1i(Tex1Location, 0);
+        // glUniform1i(Tex2Location, 1);
 
-        Tex1Location = glGetUniformLocation(pslime->pid, "tex");
-        Tex2Location = glGetUniformLocation(pslime->pid, "tex2");
-        glUseProgram(pslime->pid);
-        glUniform1i(Tex1Location, 2);
-        glUniform1i(Tex2Location, 3);
+        // Tex1Location = glGetUniformLocation(pslime->pid, "tex");
+        // Tex2Location = glGetUniformLocation(pslime->pid, "tex2");
+        // glUseProgram(pslime->pid);
+        // glUniform1i(Tex1Location, 2);
+        // glUniform1i(Tex2Location, 3);
+    }
+    void SetMaterial(shared_ptr<Program> curS, int i) {
 
+    	switch (i) {
+    		case 0:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.089, 0.035, 0.013);
+    			glUniform3f(curS->getUniform("MatDif"), 0.89, 0.35, 0.13);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.17, 0.06);
+    			glUniform1f(curS->getUniform("MatShine"), 20.0);
+    		break;
+    		case 1: 
+    			glUniform3f(curS->getUniform("MatAmb"), 0.063, 0.75, 0.8);
+    			glUniform3f(curS->getUniform("MatDif"), 0.2, 0.8, 0.9);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.1, 0.4, 0.45);
+    			glUniform1f(curS->getUniform("MatShine"), 400.0);
+    		break;
+    		case 2:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.05, 0.01, 0.01);
+    			glUniform3f(curS->getUniform("MatDif"), 0.9, 0.3, 0.1);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.15, 0.05);
+    			glUniform1f(curS->getUniform("MatShine"), 27.9);
+    		break;
+			case 3:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.04, 0.04, 0.04);
+    			glUniform3f(curS->getUniform("MatDif"), 0.4, 0.4, 0.4);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.2, 0.2, 0.2);
+    			glUniform1f(curS->getUniform("MatShine"), 27.9);
+    		break;
+			case 4:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.02, 0.02, 0.02);
+    			glUniform3f(curS->getUniform("MatDif"), 0.2, 0.2, 0.2);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.1, 0.1, 0.1);
+    			glUniform1f(curS->getUniform("MatShine"), 27.9);
+    		break;
+			case 5:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.01, 0.01, 0.01);
+    			glUniform3f(curS->getUniform("MatDif"), 0.1, 0.1, 0.1);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.05, 0.05, 0.05);
+    			glUniform1f(curS->getUniform("MatShine"), 227.9);
+    		break;
+			case 6:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.07, 0.07, 0.07);
+    			glUniform3f(curS->getUniform("MatDif"), 0.7, 0.7, 0.7);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.035, 0.035, 0.035);
+    			glUniform1f(curS->getUniform("MatShine"), 500.9);
+    		break;
+			case 7:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.095, 0.075, 0.041);
+    			glUniform3f(curS->getUniform("MatDif"), 0.95, 0.75, 0.41);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.47, 0.37, 0.21);
+    			glUniform1f(curS->getUniform("MatShine"), 500.9);
+    		break;
+			case 8:
+    			glUniform3f(curS->getUniform("MatAmb"), 0.095, 0.095, 0.095);
+    			glUniform3f(curS->getUniform("MatDif"), 0.95, 0.95, 0.95);
+    			glUniform3f(curS->getUniform("MatSpec"), 0.5, 0.5, 0.5);
+    			glUniform1f(curS->getUniform("MatShine"), 500.9);
+    		break;
+  		}
     }
 
     //General OGL initialization - set OGL state here
     void init(const std::string &resourceDirectory) {
         GLSL::checkVersion();
+
+        CHECKED_GL_CALL(glEnable(GL_DEPTH_TEST));
+		CHECKED_GL_CALL(glEnable(GL_BLEND));
+		CHECKED_GL_CALL(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+		CHECKED_GL_CALL(glPointSize(5.0f));
 
         // Set background color.
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -477,100 +567,35 @@ public:
         hud->addUniform("Opacity");
         hud->addUniform("Height");
 
-        pworld = std::make_shared<Program>();
-        pworld->setVerbose(true);
-        pworld->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
-        if (!pworld->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        pworld->addUniform("P");
-        pworld->addUniform("V");
-        pworld->addUniform("M");
-        pworld->addUniform("campos");
-        pworld->addAttribute("vertPos");
-        pworld->addAttribute("vertNor");
-        pworld->addAttribute("vertTex");
+        texture = std::make_shared<Texture>();
+		texture->setFilename(resourceDirectory + "/alpha.bmp");
+		texture->init();
+		texture->setUnit(0);
+		texture->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+        
 
-        pplayer = std::make_shared<Program>();
-        pplayer->setVerbose(true);
-        pplayer->setShaderNames(resourceDirectory + "/shader_vertex_player.glsl",
-                                resourceDirectory + "/shader_fragment_player.glsl");
-        if (!pplayer->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        pplayer->addUniform("P");
-        pplayer->addUniform("V");
-        pplayer->addUniform("M");
-        pplayer->addUniform("campos");
-        pplayer->addAttribute("vertPos");
-        pplayer->addAttribute("vertNor");
-        pplayer->addAttribute("vertTex");
+		// Initialize PARTICLE the GLSL program.
+		partProg = make_shared<Program>();
+		partProg->setVerbose(true);
+		partProg->setShaderNames(
+			resourceDirectory + "/lab10_vert.glsl",
+			resourceDirectory + "/lab10_frag.glsl");
+		if (! partProg->init())
+		{
+			std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+			exit(1);
+		}
+		partProg->addUniform("P");
+		partProg->addUniform("M");
+		partProg->addUniform("V");
+		partProg->addUniform("pColor");
+		partProg->addUniform("alphaTexture");
+		partProg->addAttribute("vertPos");
+		partProg->addAttribute("vertCol");
 
-        parm = std::make_shared<Program>();
-        parm->setVerbose(true);
-        parm->setShaderNames(resourceDirectory + "/shader_vertex_player.glsl",
-                                resourceDirectory + "/shader_fragment_player.glsl");
-        if (!parm->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        parm->addUniform("P");
-        parm->addUniform("V");
-        parm->addUniform("M");
-        parm->addUniform("campos");
-        parm->addAttribute("vertPos");
-        parm->addAttribute("vertNor");
-        parm->addAttribute("vertTex");
+		// thePartSystem = new particleSys(vec3(0, 0, 0));
+		// thePartSystem->gpuSetup();
 
-        pprojectile = std::make_shared<Program>();
-        pprojectile->setVerbose(true);
-        pprojectile->setShaderNames(resourceDirectory + "/shader_vertex.glsl",
-                                resourceDirectory + "/shader_fragment.glsl");
-        if (!pprojectile->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        pprojectile->addUniform("P");
-        pprojectile->addUniform("V");
-        pprojectile->addUniform("M");
-        pprojectile->addUniform("campos");
-        pprojectile->addAttribute("vertPos");
-        pprojectile->addAttribute("vertNor");
-        pprojectile->addAttribute("vertTex");
-
-        psky = std::make_shared<Program>();
-        psky->setVerbose(true);
-        psky->setShaderNames(resourceDirectory + "/skyvertex.glsl", resourceDirectory + "/skyfrag.glsl");
-        if (!psky->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        psky->addUniform("dn");
-        psky->addUniform("P");
-        psky->addUniform("V");
-        psky->addUniform("M");
-        psky->addUniform("campos");
-        psky->addAttribute("vertPos");
-        psky->addAttribute("vertNor");
-        psky->addAttribute("vertTex");
-
-        pslime = std::make_shared<Program>();
-        pslime->setVerbose(true);
-        pslime->setShaderNames(resourceDirectory + "/slimevertex.glsl", resourceDirectory + "/slimefrag.glsl");
-        if (!pslime->init()) {
-            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
-            exit(1);
-        }
-        pslime->addUniform("P");
-        pslime->addUniform("V");
-        pslime->addUniform("M");
-        pslime->addAttribute("vertPos");
-        pslime->addAttribute("vertNor");
-        pslime->addAttribute("vertTex");
-        pslime->addUniform("part");
-        pslime->addUniform("hit");
 
         for(int i = 0; i < NUM_ENEMIES; i++) {
             float x = (float)(rand() % 200 - 100) / 100.0f;
@@ -579,9 +604,16 @@ public:
             vec3 forward = normalize(vec3(x, y, z));
             enemies.emplace_back(forward);
         }
+        for(int i = 0; i < NUM_ENEMIES; i++) {
+            float x = (float)(rand() % 200 - 100) / 100.0f;
+            float y = (float)(rand() % 200 - 100) / 100.0f;
+            float z = (float)(rand() % 200 - 100) / 100.0f;
+            vec3 forward = normalize(vec3(x, y, z));
+            enemies2.emplace_back(forward);
+        }
 
         game_stats.push_back(player.health);
-        game_stats.push_back(enemies.size());
+        game_stats.push_back(enemies.size() * 2);
     }
 
     void drawHUD() {
@@ -661,7 +693,7 @@ public:
             P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
                                  1000.0f); //so much type casting... GLM metods are quite funny ones
 //        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
-
+        M = glm::mat4(1.f);
         prog->bind();
         glUniform1f(prog->getUniform("Height"), -1.f);
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
@@ -672,21 +704,24 @@ public:
         glBindVertexArray(VertexArrayID);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, Texture);
 
         M = player.getModel();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
 
-//        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
-////            cout << "Player Collided!!! " << "height: " << player.height << endl;
-//        }
+    //    if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
+    //        cout << "Player Collided!!! " << "height: " << player.height << endl;
+    //    }
+       SetMaterial(prog, 1);
 
         // draw player projectiles
         vector<int> projectilesToDelete = vector<int>();
         vector<int> enemiesHit = vector<int>();
+        vector<int> enemiesHit2 = vector<int>();
+
         for(int i = 0; i < player_projectiles.size(); i++) {
             Projectile *proj = &player_projectiles[i];
             // check if collided with player
@@ -704,6 +739,13 @@ public:
                     hitEnemy=true;
                 }
             }
+            for(int j = 0; j < enemies2.size(); j++) {
+                if(collisions::detectSphereSphere(proj->hitbox, enemies2[j].hitbox)) {
+                    enemiesHit2.push_back(j);
+                    projectilesToDelete.push_back(i);
+                    hitEnemy=true;
+                }
+            }
             if(hitEnemy) {
                 printf("Enemy hit!\n");
                 continue;
@@ -717,23 +759,38 @@ public:
             } else player_projectiles.erase(player_projectiles.begin() + i);
 
         }
+
         for(int i = projectilesToDelete.size() - 1; i >= 0; i--) {
             player_projectiles.erase(player_projectiles.begin() + projectilesToDelete[i]);
         }
+
         for(int i = enemiesHit.size() - 1; i >= 0; i--) {
             enemies.erase(enemies.begin() + enemiesHit[i]);
         }
+        for(int i = enemiesHit2.size() - 1; i >= 0; i--) {
+            enemies2.erase(enemies2.begin() + enemiesHit2[i]);
+        }
 
-        // draw enemies
+        // draw enemies orange
         for(int i = 0; i < enemies.size(); i++) {
             if(enemies[i].updateEnemy(player.fwd, frametime)) {
                 enemy_projectiles.push_back(enemies[i].spawnProjectile());
             };
             M = enemies[i].getModel();
             glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-            playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+            enemyOBJ->draw(prog, GL_FALSE, enemyMaterialLoader1.materials);
         }
 
+        for(int i = 0; i < enemies2.size(); i++) {
+            if(enemies2[i].updateEnemy(player.fwd, frametime)) {
+                enemy_projectiles.push_back(enemies2[i].spawnProjectile());
+            };
+            M = enemies2[i].getModel();
+            glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+            enemyOBJ->draw(prog, GL_FALSE, enemyMaterialLoader2.materials);
+        }
+
+        SetMaterial(prog, 2);
         // draw enemy projectiles
         projectilesToDelete.clear();
         for(int i = 0; i < enemy_projectiles.size(); i++) {
@@ -752,17 +809,18 @@ public:
             } else
                 enemy_projectiles.erase(enemy_projectiles.begin() + i);
         }
+
         for(int i = projectilesToDelete.size() - 1; i >= 0; i--) {
             enemy_projectiles.erase(enemy_projectiles.begin() + projectilesToDelete[i]);
         }
 
-        if(player.health != game_stats[0] || enemies.size() != game_stats[1]) {
-            printf("Player health: %d | Enemies left: %d\n", player.health, enemies.size());
+        if(player.health != game_stats[0] || enemies.size() + enemies2.size() != game_stats[1]) {
+            printf("Player health: %d | Enemies left: %d\n", player.health, enemies.size() + enemies2.size());
             game_stats[0] = player.health;
-            game_stats[1] = enemies.size();
+            game_stats[1] = enemies.size() + enemies2.size();
         }
 
-        if(enemies.size() == 0) {
+        if(enemies.size() + enemies2.size() == 0) {
             printf("You win!\n");
             gameDone = true;
         }
@@ -771,18 +829,18 @@ public:
             gameDone = true;
         }
 
-        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glUniform3fv(prog->getUniform("campos"), 1, &arm.pos[0]);
+        // glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        // glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        // glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        // glUniform3fv(prog->getUniform("campos"), 1, &arm.pos[0]);
 
-        glBindVertexArray(VertexArrayID);
-        //actually draw from vertex 0, 3 vertices
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        // glBindVertexArray(VertexArrayID);
+        // //actually draw from vertex 0, 3 vertices
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
         //glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_SHORT, (void*)0);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, Texture);
 
 //        M = arm.getModel();
 //        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -790,18 +848,18 @@ public:
 
         // Draw the box using GLSL.
 
-        //send the matrices to the shaders
-        glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
-        glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
+        // //send the matrices to the shaders
+        // glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        // glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+        // glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        // glUniform3fv(prog->getUniform("campos"), 1, &player.pos[0]);
 
-        glBindVertexArray(VertexArrayID);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
+        // glBindVertexArray(VertexArrayID);
+        // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IndexBufferIDBox);
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, Texture);
-
+        // glActiveTexture(GL_TEXTURE0);
+        // glBindTexture(GL_TEXTURE_2D, Texture);
+        
         M = world.getModel();
 
         glUniform1f(prog->getUniform("Height"), worldCollision.getHeight(player.fwd));
@@ -811,7 +869,7 @@ public:
         worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
 
 
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &P[0][0]);
+        // glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &P[0][0]);
 
 
         M = player.getModelHealth();
@@ -819,6 +877,33 @@ public:
         hpbarOBJ->draw(prog, GL_FALSE, hpbarMaterialLoader.materials);
 
         prog->unbind();
+
+        V = camera.playerCam(player.pos);
+        M = world.getModel();
+
+         // Draw PARTICLES
+		partProg->bind();
+		texture->bind(partProg->getUniform("alphaTexture"));
+        CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
+        CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
+		CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
+		CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.9, 0.8, 0.4));
+	
+		// thePartSystem->drawMe(partProg);
+		// thePartSystem->update();
+
+        for(int i = 0; i < player_projectiles.size(); i++) {
+            Projectile *proj = &player_projectiles[i];
+            proj->renderParticleSys(V, partProg);
+        }
+        // CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.2, 0.2, 0.9));
+        
+        for(int i = 0; i < enemy_projectiles.size(); i++) {
+            Projectile *proj = &enemy_projectiles[i];
+            proj->renderParticleSys(V, partProg);
+        }
+
+		partProg->unbind();       
 
         glBindVertexArray(0);
     }
@@ -875,6 +960,7 @@ int main(int argc, char **argv)
 		may need to initialize or set up different data and state */
 	// Initialize scene.
 	application->init(resourceDir);
+    // application->initTex(resourceDir);
 	application->initGeom();
 
 	// Loop until the user closes the window.
