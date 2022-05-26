@@ -10,6 +10,7 @@ using namespace glm;
 #define ARMSCALE 0.3f
 #define PI 3.14159265f
 #define ARMROTSPEED 0.6f
+#define ARMHEIGHT 14.5f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -56,12 +57,7 @@ public:
                 * mouseRot
                 // rotation to orient the player correctly
                 * rotate(mat4(1), PI / 2, vec3(0, 0, 1))
-
-//                * rotate(mat4(1), PI / 2, vec3(1,  0, 0))
-
                 * fireRotation
-
-
                 //* rotate(mat4(1), PI / 2, vec3(1, 0, 0))
                 // scale the player
                 * scale(mat4(1), vec3(ARMSCALE));
@@ -107,7 +103,7 @@ public:
             twistArm();
         }
         
-        pos = 15.0f * fwd;
+        pos = ARMHEIGHT * fwd;
     }
 
 
@@ -155,7 +151,28 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        return Projectile(pos + cross(fwd, pDir) * 0.05f, vec3(pDir.x, pDir.y, pDir.z), 10);
+        vec2 movementOffset = vec2(0, 0);
+        if(w)
+            movementOffset.y += 1;
+        if(s)
+            movementOffset.y -= 1;
+        if(a)
+            movementOffset.x += 1;
+        if(d)
+            movementOffset.x -= 1;
+        vec3 horOffset = movementOffset.x * right;
+        vec3 verOffset= movementOffset.y * up;
+        vec3 offset;
+        if(movementOffset == vec2(0, 0))
+            offset = vec3(0, 0, 0);
+        else
+            offset = normalize(horOffset + verOffset);
+        printf("%f %f %f\n", offset.x, offset.y, offset.z);
+        printf("%f %f %f\n", right.x, right.y, right.z);
+        printf("%f %f %f\n", up.x, up.y, up.z);
+        pDir = normalize(pDir);
+//        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) + offset, 10, vec3(0.2f, 0.8f, 0.9f));
+        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) , 10, vec3(0.2f, 0.8f, 0.9f));
     }
 
 private:

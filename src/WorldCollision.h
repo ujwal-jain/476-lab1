@@ -108,15 +108,21 @@ public:
 //        cout << face.pointInFace(vec3(0, 0, 13)) << endl;
     }
 
-    bool nextLocationValid(vec3 pos, float height) {
+    bool isLocationValid(vec3 pos, float height) {
+        return height >= getFaceHeight(pos);
+    }
+
+// 0.42122
+// 0.449053
+// 0.476934
+    float getFaceHeight(vec3 pos) {
         float mHeight = 0;
         for(Face face: triFaces) {
             if (face.h < 0.5 && face.pointInFace(pos)) {
                 mHeight = max({mHeight, face.h});
             }
         }
-        return height >= mHeight;
-
+        return mHeight;
     }
 
     void printFace(Face face) {

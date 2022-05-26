@@ -12,6 +12,7 @@ uniform vec3 MatSpec;
 uniform float MatShine;
 uniform float Opacity;
 uniform float Height;
+uniform float Aim;
 
 float getdiff(vec3 lp) {
     vec3 n = normalize(vertex_normal);
@@ -33,19 +34,23 @@ float getspec(vec3 lp) {
 
 void main()
 {
-    // diffuse coefficient
-    float dC = getdiff(campos*2);
+    if(Aim == 1.0) {
+        color = vec4(0.1, 0.1, 0.1, 0.05);
+    } else {
+        // diffuse coefficient
+        float dC = getdiff(campos*2);
 
-    // ambient coefficient
-    vec3 amb = MatDif / 10;
+        // ambient coefficient
+        vec3 amb = MatDif / 10;
 
-    // specular coefficient
-    float sC = getspec(campos*2);
+        // specular coefficient
+        float sC = getspec(campos*2);
 
-    vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
-    color = vec4(color3, Opacity);
-//
-//    if(Height != -1) {
-//        color.g *= Height;
-//    }
+        vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
+        color = vec4(color3, Opacity);
+        //
+        //    if(Height != -1) {
+        //        color.g *= Height;
+        //    }
+    }
 }

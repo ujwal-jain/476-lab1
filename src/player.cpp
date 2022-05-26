@@ -41,7 +41,7 @@ public:
         up = vec3(0, 1, 0);
         right = cross(fwd, up);
         height = 0.43f;
-        hitbox = boundingsphere(pos, 0.5f);
+        hitbox = boundingsphere(pos, 1.f);
         health = 10;
     }
 
@@ -62,9 +62,9 @@ public:
     mat4 getModelHealth() const {
         // player rotation around world
         return rotation
-               * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                // height above world
                * translate(mat4(1), vec3(0, 0, -1 * (PLAYERPOSHEIGHT + 2)))
+                 * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                // player rotation about mouse
                * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                //
@@ -75,6 +75,7 @@ public:
                * scale(mat4(1), vec3(PLAYERSCALE, PLAYERSCALE, health * PLAYERSCALE * 0.125));
     }
 
+
     void updateLocation()
     {
         if(angle != 0 && axis != vec3(0, 0, 0))
@@ -83,6 +84,20 @@ public:
         hitbox.center = pos;
     }
 
+    mat4 getModelAim() const {
+        // player rotation around world
+        return rotation
+               * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
+               // height above world
+               * translate(mat4(1), vec3(0, 0, -1 * PLAYERPOSHEIGHT))
+               // player rotation about mouse
+               * mouseRot
+               // rotation to orient the player correctly
+               * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+               * translate(mat4(1), vec3(0, 0.5, -1))
+               // scale the player
+               * scale(mat4(1), vec3(PLAYERSCALE));
+    }
     vec3 getNextLocation(float dt)
     {
         // either about right, up, right + up, or right - up given a combination of wasd
@@ -164,7 +179,7 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z), 10);
+        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z), 10, vec3(0.2f, 0.8f, 0.9f));
     }
 
 private:

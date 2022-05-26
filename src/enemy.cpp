@@ -7,10 +7,13 @@
 using namespace std;
 using namespace glm;
 
-#define PLAYERSCALE 1.3f
+#define PLAYERSCALE 1.0f
+//#define PLAYERSCALE 0.7f
 #define ROTATIONSPEED 2.0f
 #define PROJSPAWN 100
 #define PI 3.14f
+#define ENEMYPROJSCALE (14.5f / 14.f)
+#define ENEMYPOSHEIGHT 14.f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -29,7 +32,8 @@ public:
 
     Enemy(vec3 forward) {
 //        forward = vec3(1, 0, 0);
-        pos = 15.f * forward;
+        pos = ENEMYPOSHEIGHT * forward;
+        printf("%f %f %f\n", pos.x, pos.y, pos.z);
 
         // find rotation matrix that changes 0, 0, -1 -> fwd
         vec3 vb = vec3(0, 0, -1);
@@ -68,11 +72,13 @@ public:
         return rotation
                * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                // height above world
-               * translate(mat4(1), vec3(0, 0, -15))
+               * translate(mat4(1), vec3(0, 0, -1 * ENEMYPOSHEIGHT))
+//               * translate(mat4(1), vec3(0, 0, -14))
                // player rotation about mouse
                * projectileRot
                // rotation to orient the player correctly
                * rotate(mat4(1), -PI / 2, vec3(1, 0, 0))
+               * rotate(mat4(1), -PI * 2, vec3(0, 1, 0))
                // scale the player
                * scale(mat4(1), vec3(PLAYERSCALE));
     }
@@ -97,7 +103,6 @@ public:
     }
 
     Projectile spawnProjectile() {
-        return Projectile(pos,-up, 0);
-//        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z));
+        return Projectile(ENEMYPROJSCALE * pos,-up, 0, vec3(0.9f, 0.3f, 0.1f));
     }
 };

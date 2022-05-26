@@ -2,8 +2,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
+#include "particleSys.h"
+#include <iostream>
 
-#define PROJSPAWNRADIUS 16.0f
+
 #define PROJRADIUS 0.3f
 #define PROJSCALE 0.12f
 #define PROJROTSPEED 1.2f
@@ -25,8 +27,11 @@ public:
     boundingsphere hitbox;
     int lifespan;
     int graceTimeLeft;
+    particleSys *thePartSystem;
+    vec3 color;
+    float pHeight;
 
-    Projectile(vec3 pos, vec3 dir, int gracePeriodTime)
+    Projectile(vec3 pos, vec3 dir, int gracePeriodTime, vec3 partColor)
     {
         this->pos = pos;
         rot = mat4(1);
@@ -35,15 +40,33 @@ public:
         rotAxis = cross(pos, dir);
         hitbox = boundingsphere(pos, PROJRADIUS);
         // 360 is entire rotation + a bit
-        lifespan = 500;
+        lifespan = 750;
 
         graceTimeLeft = gracePeriodTime;
+        initParticleSys(partColor);
+        color = partColor;
+        pHeight = 0.43f;
+    }
+
+    void initParticleSys(vec3 partColor){
+        // cout << color.x <<"\n";
+        // thePartSystem = new particleSys(pos, vec3(0.2f, 0.8f, 0.9f));
+        // thePartSystem = new particleSys(pos, color);
+        thePartSystem = new particleSys(pos, partColor);
+
+        // thePartSystem = new particleSys(pos, vec3(color.x, color.y, color.z));
+
+		thePartSystem->gpuSetup();
+    }
+
+    void renderParticleSys(mat4 V, shared_ptr<Program> partProg){
+        thePartSystem->setCamera(V);
+        thePartSystem->drawMe(partProg);
+		thePartSystem->update(pos);
     }
 
     mat4 getModel() const {
-        return
-            translate(mat4(1), pos)
-            * scale(mat4(1), vec3(PROJSCALE));
+        return translate(mat4(1), pos * vec3(0.90)) * scale(mat4(1), vec3(PROJSCALE));
     }
 
     void rotateProj(float frametime) {
