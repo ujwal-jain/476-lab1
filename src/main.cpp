@@ -49,7 +49,6 @@ shared_ptr<Shape> projectileOBJ;
 shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
 shared_ptr<Shape> hpbarOBJ;
-shared_ptr<Shape> enemyOBJ;
 shared_ptr<Shape> coneOBJ;
 
 
@@ -341,10 +340,7 @@ public:
         hpbarOBJ->loadMesh(resourceDirectory + "/hpbar3.obj", (string *) "../resources/");
         hpbarOBJ->resize();
         hpbarOBJ->init();
-        enemyOBJ = make_shared<Shape>();
-        enemyOBJ->loadMesh(resourceDirectory + "/enemy.obj", (string *) "../resources/");
-        enemyOBJ->resize();
-        enemyOBJ->init();
+
 
         armOBJ = make_shared<Shape>();
         armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
@@ -353,6 +349,11 @@ public:
 
         enemyOBJ = make_shared<Shape>();
         enemyOBJ->loadMesh(resourceDirectory + "/enemy-character.obj", (string *) "../resources/");
+        enemyOBJ->resize();
+        enemyOBJ->init();
+
+        enemyOBJ = make_shared<Shape>();
+        enemyOBJ->loadMesh(resourceDirectory + "/enemy.obj", (string *) "../resources/");
         enemyOBJ->resize();
         enemyOBJ->init();
 
@@ -365,111 +366,6 @@ public:
         asteroidOBJ->loadMesh(resourceDirectory + "/asteroid.obj", (string *) "../resources/");
         asteroidOBJ->resize();
         asteroidOBJ->init();
-
-        int width, height, channels;
-        char filepath[1000];
-
-        // //texture 1
-        // string str = resourceDirectory + "/alpha.bmp";
-        // strcpy(filepath, str.c_str());
-        // unsigned char *data = stbi_load(filepath, &width, &height, &channels, 4);
-        // glGenTextures(1, &Texture1);
-        // //glActiveTexture(GL_TEXTURE0);
-        // glBindTexture(GL_TEXTURE_2D, Texture1);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        // glGenerateMipmap(GL_TEXTURE_2D);
-
-        // //texture 2
-        // str = resourceDirectory + "/night.jpg";
-        // strcpy(filepath, str.c_str());
-        // data = stbi_load(filepath, &width, &height, &channels, 4);
-        // glGenTextures(1, &Texture2);
-        // glActiveTexture(GL_TEXTURE1);
-        // glBindTexture(GL_TEXTURE_2D, Texture2);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        // glGenerateMipmap(GL_TEXTURE_2D);
-
-        // //texture slime
-        // str = resourceDirectory + "/slime.jpeg";
-        // strcpy(filepath, str.c_str());
-        // data = stbi_load(filepath, &width, &height, &channels, 4);
-        // glGenTextures(1, &TextureSlime);
-        // glActiveTexture(GL_TEXTURE2);
-        // glBindTexture(GL_TEXTURE_2D, TextureSlime);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        // glGenerateMipmap(GL_TEXTURE_2D);
-
-        // //texture slime when hit
-        // str = resourceDirectory + "/slimehit.jpeg";
-        // strcpy(filepath, str.c_str());
-        // data = stbi_load(filepath, &width, &height, &channels, 4);
-        // glGenTextures(1, &TextureSlime2);
-        // glActiveTexture(GL_TEXTURE3);
-        // glBindTexture(GL_TEXTURE_2D, TextureSlime2);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        // glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        // glGenerateMipmap(GL_TEXTURE_2D);
-
-        //[TWOTEXTURES]
-        //set the 2 textures to the correct samplers in the fragment shader:
-        // GLuint Tex1Location = glGetUniformLocation(partProg->pid, "alphaTexture");//tex, tex2... sampler in the fragment shader
-        // // GLuint Tex2Location = glGetUniformLocation(prog->pid, "tex2");
-        // // Then bind the uniform samplers to texture units:
-        // glUseProgram(partProg->pid);
-        // glUniform1i(Tex1Location, 0);
-        // glUniform1i(Tex2Location, 1);
-
-        // //PLAYER
-        // Tex1Location = glGetUniformLocation(pplayer->pid, "tex");//tex, tex2... sampler in the fragment shader
-        // Tex2Location = glGetUniformLocation(pplayer->pid, "tex2");
-        // // Then bind the uniform samplers to texture units:
-        // glUseProgram(pplayer->pid);
-        // glUniform1i(Tex1Location, 0);
-        // glUniform1i(Tex2Location, 1);
-
-        // //ARM
-        // Tex1Location = glGetUniformLocation(parm->pid, "tex");//tex, tex2... sampler in the fragment shader
-        // Tex2Location = glGetUniformLocation(parm->pid, "tex2");
-        // // Then bind the uniform samplers to texture units:
-        // glUseProgram(parm->pid);
-        // glUniform1i(Tex1Location, 0);
-        // glUniform1i(Tex2Location, 1);
-
-        // //PROJECTILE
-        // Tex1Location = glGetUniformLocation(pprojectile->pid, "tex");//tex, tex2... sampler in the fragment shader
-        // Tex2Location = glGetUniformLocation(pprojectile->pid, "tex2");
-        // // Then bind the uniform samplers to texture units:
-        // glUseProgram(pprojectile->pid);
-        // glUniform1i(Tex1Location, 0);
-        // glUniform1i(Tex2Location, 1);
-
-        // Tex1Location = glGetUniformLocation(psky->pid, "tex");//tex, tex2... sampler in the fragment shader
-        // Tex2Location = glGetUniformLocation(psky->pid, "tex2");
-        // // Then bind the uniform samplers to texture units:
-        // glUseProgram(psky->pid);
-        // glUniform1i(Tex1Location, 0);
-        // glUniform1i(Tex2Location, 1);
-
-        // Tex1Location = glGetUniformLocation(pslime->pid, "tex");
-        // Tex2Location = glGetUniformLocation(pslime->pid, "tex2");
-        // glUseProgram(pslime->pid);
-        // glUniform1i(Tex1Location, 2);
-        // glUniform1i(Tex2Location, 3);
     }
     void SetMaterial(shared_ptr<Program> curS, int i) {
 
@@ -717,6 +613,7 @@ public:
                                  1000.0f); //so much type casting... GLM metods are quite funny ones
 //        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
         M = glm::mat4(1.f);
+
         prog->bind();
         glUniform1f(prog->getUniform("Aim"), 0);
         glUniform1f(prog->getUniform("Height"), -1.f);
