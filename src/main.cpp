@@ -517,7 +517,7 @@ public:
 		partProg->addAttribute("vertCol");
 
         backgroundTex = make_shared<Texture>();
-  		backgroundTex->setFilename(resourceDirectory + "/space.jpg");
+  		backgroundTex->setFilename(resourceDirectory + "/space3.jpg");
   		backgroundTex->init();
   		backgroundTex->setUnit(1);
   		backgroundTex->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -641,6 +641,25 @@ public:
             P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
                                  1000.0f); //so much type casting... GLM metods are quite funny ones
         M = glm::mat4(1.f);
+
+        texProg->bind();
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
+        M = glm::scale(mat4(1), vec3(900.0));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
+
+		//draw big background sphere
+		glUniform1i(texProg->getUniform("flip"), -1);
+		backgroundTex->bind(texProg->getUniform("Texture0"));
+
+        sphere->draw(texProg, GL_FALSE, {});
+		// Model->pushMatrix();
+		// 	Model->loadIdentity();
+		// 	Model->scale(vec3(300.0));
+		// 	setModel(texProg, Model);
+		// 	sphere->draw(texProg);
+		// Model->popMatrix();
+		texProg->unbind();
 
         prog->bind();
         glUniform1f(prog->getUniform("Aim"), 0);
@@ -818,24 +837,7 @@ public:
 
 		partProg->unbind();
 
-        texProg->bind();
-        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
-        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
-        M = glm::scale(mat4(1), vec3(300.0));
-        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
-
-		//draw big background sphere
-		glUniform1i(texProg->getUniform("flip"), -1);
-		backgroundTex->bind(texProg->getUniform("Texture0"));
-
-        sphere->draw(texProg, GL_FALSE, {});
-		// Model->pushMatrix();
-		// 	Model->loadIdentity();
-		// 	Model->scale(vec3(300.0));
-		// 	setModel(texProg, Model);
-		// 	sphere->draw(texProg);
-		// Model->popMatrix();
-		texProg->unbind();
+        
 
         glBindVertexArray(0);
     }

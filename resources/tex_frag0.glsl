@@ -17,6 +17,7 @@ void main() {
 
   
 	vec3 normal = normalize(fragNor) * flip;
+	normal = -normal;
 	vec3 light = normalize(lightDir);
 	// float dCo = max(0, dot(normal, light));
 	vec4 texColor0 = (texture(Texture0, vTexCoord));
