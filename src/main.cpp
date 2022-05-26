@@ -806,7 +806,7 @@ public:
 
         prog->unbind();
 
-        M = world.getModel();
+        M = world.getModel() * 1.11f;
 
          // Draw PARTICLES
 		partProg->bind();
