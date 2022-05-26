@@ -878,7 +878,6 @@ public:
 
         prog->unbind();
 
-        V = camera.playerCam(player.pos);
         M = world.getModel();
 
          // Draw PARTICLES
