@@ -73,6 +73,21 @@ public:
                * scale(mat4(1), vec3(PLAYERSCALE, PLAYERSCALE, health * PLAYERSCALE * 0.125));
     }
 
+    mat4 getModelAim() const {
+        // player rotation around world
+        return rotation
+               * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
+               // height above world
+               * translate(mat4(1), vec3(0, 0, -1 * PLAYERPOSHEIGHT))
+               // player rotation about mouse
+               * mouseRot
+               // rotation to orient the player correctly
+               * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+               * translate(mat4(1), vec3(0, 0.5, -1))
+               // scale the player
+               * scale(mat4(1), vec3(PLAYERSCALE));
+    }
+
     void updateLocation(float dt)
     {
         // either about right, up, right + up, or right - up given a combination of wasd

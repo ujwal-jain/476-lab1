@@ -41,10 +41,12 @@ using namespace glm;
 shared_ptr<Shape> shape;
 shared_ptr<Shape> worldOBJ;
 shared_ptr<Shape> playerOBJ;
+shared_ptr<Shape> enemyOBJ;
 shared_ptr<Shape> projectileOBJ;
 shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
 shared_ptr<Shape> hpbarOBJ;
+shared_ptr<Shape> coneOBJ;
 
 
 
@@ -71,6 +73,8 @@ public:
     MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
     MaterialLoader fireballMaterialLoader = MaterialLoader("../resources/fireball.mtl");
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
+    MaterialLoader enemyMaterialLoader = MaterialLoader("../resources/enemy-character.mtl");
+    MaterialLoader coneMaterialLoader = MaterialLoader("../resources/player-aim.mtl");
 
     // Our shader program
     std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm, hud;
@@ -98,6 +102,7 @@ public:
     GLuint TextureSlime2;
 
     float totalTime = 0;
+    int isMainView = 1;
 
     void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
         if(gameDone)
@@ -168,6 +173,9 @@ public:
         }
         if (key == GLFW_KEY_I && action == GLFW_PRESS) {
             player.health += 1;
+        }
+        if (key == GLFW_KEY_T && action == GLFW_PRESS) {
+            isMainView = isMainView ? 0 : 1;
         }
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -291,11 +299,18 @@ public:
         armMaterialLoader.readMaterialFile();
         asteroidMaterialLoader.readMaterialFile();
         hpbarMaterialLoader.readMaterialFile();
+        enemyMaterialLoader.readMaterialFile();
+        coneMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
         playerOBJ->loadMesh(resourceDirectory + "/player-character.obj", (string *) "../resources/");
         playerOBJ->resize();
         playerOBJ->init();
+
+        coneOBJ = make_shared<Shape>();
+        coneOBJ->loadMesh(resourceDirectory + "/player-aim.obj", (string *) "../resources/");
+        coneOBJ->resize();
+        coneOBJ->init();
 
         hpbarOBJ = make_shared<Shape>();
         hpbarOBJ->loadMesh(resourceDirectory + "/hpbar3.obj", (string *) "../resources/");
@@ -306,6 +321,11 @@ public:
         armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
         armOBJ->resize();
         armOBJ->init();
+
+        enemyOBJ = make_shared<Shape>();
+        enemyOBJ->loadMesh(resourceDirectory + "/enemy-character.obj", (string *) "../resources/");
+        enemyOBJ->resize();
+        enemyOBJ->init();
 
         projectileOBJ = make_shared<Shape>();
         projectileOBJ->loadMesh(resourceDirectory + "/fireball.obj");
@@ -432,7 +452,7 @@ public:
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         // Enable z-buffer test.
         glEnable(GL_DEPTH_TEST);
-        //glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//        glfwSetInputMode(windowManager->getHandle(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         //glDisable(GL_DEPTH_TEST);
         // Initialize the GLSL program.
         prog = std::make_shared<Program>();
@@ -455,6 +475,7 @@ public:
         prog->addAttribute("vertTex");
         prog->addUniform("Opacity");
         prog->addUniform("Height");
+        prog->addUniform("Aim");
 
         hud = std::make_shared<Program>();
         hud->setVerbose(true);
@@ -663,6 +684,7 @@ public:
 //        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
 
         prog->bind();
+        glUniform1f(prog->getUniform("Aim"), 0);
         glUniform1f(prog->getUniform("Height"), -1.f);
         glUniformMatrix4fv(prog->getUniform("P"), 1, GL_FALSE, &P[0][0]);
         glUniformMatrix4fv(prog->getUniform("V"), 1, GL_FALSE, &V[0][0]);
@@ -678,6 +700,12 @@ public:
         M = player.getModel();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+
+        M = player.getModelAim();
+        glUniform1f(prog->getUniform("Aim"), 1);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        coneOBJ->draw(prog, GL_FALSE, coneMaterialLoader.materials);
+        glUniform1f(prog->getUniform("Aim"), 0);
 
 
 //        if(worldCollision.didPlayerCollide(worldOBJ, player.fwd, player.height)) {
@@ -731,7 +759,7 @@ public:
             };
             M = enemies[i].getModel();
             glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-            playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+            enemyOBJ->draw(prog, GL_FALSE, enemyMaterialLoader.materials);
         }
 
         // draw enemy projectiles
@@ -834,16 +862,18 @@ public:
         int width, height;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
 
+
         // player cam
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glViewport(0, 0, width, height);
-        drawScene(true);
+        drawScene(isMainView ? false : true);
 
         // top down cam
         glClear(GL_DEPTH_BUFFER_BIT);
         glViewport(0, height - height / 6, width / 6, height / 6);
         // Clear framebuffer.
-        drawScene(false);
+        drawScene(isMainView ? true : false);
+
 
 //        glClear(GL_DEPTH_BUFFER_BIT);
 //        glViewport(width - (width / 6) - 64, height - height / 15, width / 6, height / 15);

@@ -7,10 +7,11 @@
 using namespace std;
 using namespace glm;
 
-#define PLAYERSCALE 1.3f
+#define PLAYERSCALE 0.7f
 #define ROTATIONSPEED 2.0f
 #define PROJSPAWN 100
 #define PI 3.14f
+#define ENEMYPOSHEIGHT 13.6f
 
 #ifndef PROJECTILE
 #include "projectile.cpp"
@@ -68,7 +69,7 @@ public:
         return rotation
                * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
                // height above world
-               * translate(mat4(1), vec3(0, 0, -15))
+               * translate(mat4(1), vec3(0, 0, -1 * ENEMYPOSHEIGHT))
                // player rotation about mouse
                * projectileRot
                // rotation to orient the player correctly

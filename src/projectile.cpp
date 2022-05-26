@@ -3,7 +3,7 @@
 #include <GLFW/glfw3.h>
 #include "boundingsphere.h"
 
-#define PROJSPAWNRADIUS 16.0f
+#define PROJSPAWNRADIUS 13.6f
 #define PROJSPAWNRADIUS2 (PROJSPAWNRADIUS*PROJSPAWNRADIUS)
 #define PROJRADIUS 0.3f
 #define PROJSCALE 0.12f
@@ -42,9 +42,7 @@ public:
     }
 
     mat4 getModel() const {
-        return
-            translate(mat4(1), pos)
-            * scale(mat4(1), vec3(PROJSCALE));
+        return translate(mat4(1), pos * vec3(0.90)) * scale(mat4(1), vec3(PROJSCALE));
     }
 
     void rotateProj(float frametime) {
