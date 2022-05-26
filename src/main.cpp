@@ -44,6 +44,7 @@ shared_ptr<Shape> playerOBJ;
 shared_ptr<Shape> projectileOBJ;
 shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
+shared_ptr<Shape> hpbarOBJ;
 
 
 
@@ -65,12 +66,14 @@ public:
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
-    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/new-wizard-body.mtl");
+    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/player-character.mtl");
     MaterialLoader armMaterialLoader = MaterialLoader("../resources/new-wizard-arm2.mtl");
     MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
+    MaterialLoader fireballMaterialLoader = MaterialLoader("../resources/fireball.mtl");
+    MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
 
     // Our shader program
-    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm;
+    std::shared_ptr<Program> prog, psky, pslime, pworld, pplayer, pprojectile, parm, hud;
 
     // Contains vertex information for OpenGL
     GLuint VertexArrayID;
@@ -159,6 +162,12 @@ public:
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             player.space = 0;
             arm.space = 0;
+        }
+        if (key == GLFW_KEY_U && action == GLFW_PRESS) {
+            player.health -= 1;
+        }
+        if (key == GLFW_KEY_I && action == GLFW_PRESS) {
+            player.health += 1;
         }
         if (key == GLFW_KEY_Z && action == GLFW_PRESS) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
@@ -281,11 +290,17 @@ public:
         playerMaterialLoader.readMaterialFile();
         armMaterialLoader.readMaterialFile();
         asteroidMaterialLoader.readMaterialFile();
+        hpbarMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
-        playerOBJ->loadMesh(resourceDirectory + "/new-wizard-body.obj", (string *) "../resources/");
+        playerOBJ->loadMesh(resourceDirectory + "/player-character.obj", (string *) "../resources/");
         playerOBJ->resize();
         playerOBJ->init();
+
+        hpbarOBJ = make_shared<Shape>();
+        hpbarOBJ->loadMesh(resourceDirectory + "/hpbar3.obj", (string *) "../resources/");
+        hpbarOBJ->resize();
+        hpbarOBJ->init();
 
         armOBJ = make_shared<Shape>();
         armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
@@ -441,6 +456,27 @@ public:
         prog->addUniform("Opacity");
         prog->addUniform("Height");
 
+        hud = std::make_shared<Program>();
+        hud->setVerbose(true);
+        hud->setShaderNames(resourceDirectory + "/shader_vertex_hud.glsl", resourceDirectory + "/shader_fragment_hud.glsl");
+        if (!hud->init()) {
+            std::cerr << "One or more shaders failed to compile... exiting!" << std::endl;
+            exit(1);
+        }
+        hud->addUniform("P");
+        hud->addUniform("V");
+        hud->addUniform("M");
+        hud->addUniform("campos");
+        hud->addUniform("MatAmb");
+        hud->addUniform("MatDif");
+        hud->addUniform("MatSpec");
+        hud->addUniform("MatShine");
+        hud->addAttribute("vertPos");
+        hud->addAttribute("vertNor");
+        hud->addAttribute("vertTex");
+        hud->addUniform("Opacity");
+        hud->addUniform("Height");
+
         pworld = std::make_shared<Program>();
         pworld->setVerbose(true);
         pworld->setShaderNames(resourceDirectory + "/shader_vertex.glsl", resourceDirectory + "/shader_fragment.glsl");
@@ -548,6 +584,48 @@ public:
         game_stats.push_back(enemies.size());
     }
 
+    void drawHUD() {
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        double frametime = get_last_elapsed_time();
+        totalTime += frametime;
+
+        // Get current frame buffer size.
+        int width, height;
+        glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
+        float aspect = width / (float) height;
+
+
+//        vector<float> playerstate = player.getState();
+        camera.update(frametime, player.pos, player.up, player.right, player.fwd);
+
+        glm::mat4 V, M, P; //View, Model and Perspective matrix
+        // player cam
+            V = lookAt(vec3(0, 0, -5), vec3(0, 0, 0), vec3(0, 1, 0));
+
+            // top down
+            P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
+                                 1000.0f); //so much type casting... GLM metods are quite funny ones
+//        P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,1000.0f); //so much type casting... GLM metods are quite funny ones
+            P = glm::ortho(-1, 1, -1, 1);
+
+        hud->bind();
+        glUniformMatrix4fv(hud->getUniform("P"), 1, GL_FALSE, &P[0][0]);
+        glUniformMatrix4fv(hud->getUniform("V"), 1, GL_FALSE, &V[0][0]);
+
+        float offset = 2.5f;
+        for (int i = 0; i < player.health; i++) {
+            M = translate(mat4(1.0f), vec3(0, 0, 0))  * scale(mat4(1.0f), vec3(1, 1, 1));
+            glUniformMatrix4fv(hud->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+            hpbarOBJ->draw(hud, GL_FALSE, hpbarMaterialLoader.materials);
+        }
+
+        hud->unbind();
+        glBindVertexArray(0);
+
+    }
+
     void drawScene(bool camState) {
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -635,7 +713,7 @@ public:
                 proj->rotateProj(frametime);
                 M = proj->getModel();
                 glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-                projectileOBJ->draw(prog, GL_FALSE, {});
+                projectileOBJ->draw(prog, GL_FALSE, fireballMaterialLoader.materials);
             } else player_projectiles.erase(player_projectiles.begin() + i);
 
         }
@@ -670,7 +748,7 @@ public:
                 proj->rotateProj(frametime);
                 M = proj->getModel();
                 glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-                projectileOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+                projectileOBJ->draw(prog, GL_FALSE, fireballMaterialLoader.materials);
             } else
                 enemy_projectiles.erase(enemy_projectiles.begin() + i);
         }
@@ -706,9 +784,9 @@ public:
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, Texture);
 
-        M = arm.getModel();
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        armOBJ->draw(prog, GL_FALSE, armMaterialLoader.materials);
+//        M = arm.getModel();
+//        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+//        armOBJ->draw(prog, GL_FALSE, armMaterialLoader.materials);
 
         // Draw the box using GLSL.
 
@@ -734,6 +812,11 @@ public:
 
 
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &P[0][0]);
+
+
+        M = player.getModelHealth();
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        hpbarOBJ->draw(prog, GL_FALSE, hpbarMaterialLoader.materials);
 
         prog->unbind();
 
@@ -761,6 +844,10 @@ public:
         glViewport(0, height - height / 6, width / 6, height / 6);
         // Clear framebuffer.
         drawScene(false);
+
+//        glClear(GL_DEPTH_BUFFER_BIT);
+//        glViewport(width - (width / 6) - 64, height - height / 15, width / 6, height / 15);
+//        drawHUD();
     }
 };
 

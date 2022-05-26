@@ -33,7 +33,7 @@ public:
 
     Arm()
     {
-        pos = vec3(0, 0, 15);
+        pos = vec3(0, 0, 30);
         rotation = mat4(1);
         fireRotation = mat4(1);
         mouseRot = mat4(1);
@@ -50,17 +50,17 @@ public:
         // player rotation around world
         return rotation
                 // height above world
-                * translate(mat4(1), vec3(0, 0, -13))
+                * translate(mat4(1), vec3(0, 0, -13.5))
+                * translate(mat4(1), vec3(-0.4, 0, -0.2))
                 // player rotation about mouse
                 * mouseRot
                 // rotation to orient the player correctly
-                * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+                * rotate(mat4(1), PI / 2, vec3(0, 0, 1))
 
-                * rotate(mat4(1), 0.7f + PI / 2 , vec3(0, 1, 0))
+//                * rotate(mat4(1), PI / 2, vec3(1,  0, 0))
 
                 * fireRotation
 
-                * translate(mat4(1), vec3(-0.3, -0.1, 0))
 
                 //* rotate(mat4(1), PI / 2, vec3(1, 0, 0))
                 // scale the player
@@ -107,7 +107,7 @@ public:
             twistArm();
         }
         
-        pos = 15.f * fwd;
+        pos = 15.0f * fwd;
     }
 
 
@@ -137,7 +137,7 @@ public:
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
-        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) - PI/4.0f, vec3(0, 0, 1));
+        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + PI, vec3(0, 0, 1));
     }
 
     Projectile spawnProjectile() {
@@ -154,8 +154,8 @@ public:
             pDirUp = -pDirUp;
 
         // pDir represents the direction of the projectile derived from the mouseDir
-        vec3 pDir = normalize(pDirRight + pDirUp);\
-        return Projectile(pos + cross(fwd, pDir), vec3(pDir.x, pDir.y, pDir.z), 10);
+        vec3 pDir = normalize(pDirRight + pDirUp);
+        return Projectile(pos + cross(fwd, pDir) * 0.05f, vec3(pDir.x, pDir.y, pDir.z), 10);
     }
 
 private:

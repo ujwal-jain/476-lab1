@@ -57,6 +57,22 @@ public:
                 * scale(mat4(1), vec3(PLAYERSCALE));
     }
 
+    mat4 getModelHealth() const {
+        // player rotation around world
+        return rotation
+               * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
+               // height above world
+               * translate(mat4(1), vec3(0, 0, -1 * (PLAYERPOSHEIGHT + 2)))
+               // player rotation about mouse
+               * rotate(mat4(1), PI / 4, vec3(0, 0, 1))
+               //
+                 * rotate(mat4(1), PI / 4, vec3(0, 1, 0))
+               // rotation to orient the player correctly
+               * rotate(mat4(1), -PI / 2, vec3(1, 0, 0))
+               // scale the player
+               * scale(mat4(1), vec3(PLAYERSCALE, PLAYERSCALE, health * PLAYERSCALE * 0.125));
+    }
+
     void updateLocation(float dt)
     {
         // either about right, up, right + up, or right - up given a combination of wasd
@@ -103,7 +119,7 @@ public:
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
-        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) - PI/4.0f, vec3(0, 0, 1));
+        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + PI + PI/4.0f, vec3(0, 0, 1));
     }
 
     Projectile spawnProjectile() {
