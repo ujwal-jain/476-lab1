@@ -50,6 +50,8 @@ shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
 shared_ptr<Shape> hpbarOBJ;
 shared_ptr<Shape> coneOBJ;
+shared_ptr<Shape> sphere;
+
 
 
 
@@ -80,7 +82,7 @@ public:
     MaterialLoader coneMaterialLoader = MaterialLoader("../resources/player-aim.mtl");
 
     // Our shader program
-    std::shared_ptr<Program> prog, hud;
+    std::shared_ptr<Program> prog, hud, texProg;
     MaterialLoader enemyMaterialLoader1 = MaterialLoader("../resources/enemy1.mtl");
     MaterialLoader enemyMaterialLoader2 = MaterialLoader("../resources/enemy2.mtl");
 
@@ -93,6 +95,8 @@ public:
     //PARTICLE SYSTEM
 	// OpenGL handle to texture data used in particle
 	std::shared_ptr<Texture> texture;
+    std::shared_ptr<Texture> backgroundTex;
+
 	bool keyToggles[256] = { false };
 	//some particle variables
 
@@ -366,6 +370,11 @@ public:
         asteroidOBJ->loadMesh(resourceDirectory + "/asteroid.obj", (string *) "../resources/");
         asteroidOBJ->resize();
         asteroidOBJ->init();
+
+        sphere = make_shared<Shape>();
+        sphere->loadMesh(resourceDirectory + "/sphere.obj", (string *) "../resources/");
+        sphere->resize();
+        sphere->init();
     }
     void SetMaterial(shared_ptr<Program> curS, int i) {
     	switch (i) {
@@ -507,6 +516,31 @@ public:
 		partProg->addAttribute("vertPos");
 		partProg->addAttribute("vertCol");
 
+        backgroundTex = make_shared<Texture>();
+  		backgroundTex->setFilename(resourceDirectory + "/space.jpg");
+  		backgroundTex->init();
+  		backgroundTex->setUnit(1);
+  		backgroundTex->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+          // Initialize the GLSL program that we will use for texture mapping
+		texProg = make_shared<Program>();
+		texProg->setVerbose(true);
+		texProg->setShaderNames(resourceDirectory + "/tex_vert.glsl", resourceDirectory + "/tex_frag0.glsl");
+		texProg->init();
+		texProg->addUniform("P");
+		texProg->addUniform("V");
+		texProg->addUniform("M");
+		texProg->addUniform("flip");
+		texProg->addUniform("Texture0");
+		texProg->addUniform("MatDiff");
+		texProg->addUniform("MatSpec");
+		texProg->addUniform("MatAmb");
+		texProg->addUniform("MatShine");
+		texProg->addUniform("lightPos");
+		texProg->addAttribute("vertPos");
+		texProg->addAttribute("vertNor");
+		texProg->addAttribute("vertTex");
+
 		// thePartSystem = new particleSys(vec3(0, 0, 0));
 		// thePartSystem->gpuSetup();
 
@@ -601,7 +635,7 @@ public:
         // player cam
         if(camState)
             P = glm::perspective((float) (3.14159 / 5.5f), (float) ((float) width / (float) height), 0.01f,
-                             100.0f); //so much type casting... GLM metods are quite funny ones
+                             1000.0f); //so much type casting... GLM metods are quite funny ones
          // top down
          else
             P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
@@ -783,6 +817,25 @@ public:
         }
 
 		partProg->unbind();
+
+        texProg->bind();
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
+        M = glm::scale(mat4(1), vec3(300.0));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
+
+		//draw big background sphere
+		glUniform1i(texProg->getUniform("flip"), -1);
+		backgroundTex->bind(texProg->getUniform("Texture0"));
+
+        sphere->draw(texProg, GL_FALSE, {});
+		// Model->pushMatrix();
+		// 	Model->loadIdentity();
+		// 	Model->scale(vec3(300.0));
+		// 	setModel(texProg, Model);
+		// 	sphere->draw(texProg);
+		// Model->popMatrix();
+		texProg->unbind();
 
         glBindVertexArray(0);
     }
