@@ -1,4 +1,4 @@
-<i>Authors: Ujwal Jain and Anshuman Komawar</i>
+<i>Authors: Ujwal Jain and Anshuman Komawar and Cameron Casey</i>
 
 This is a requirements list for the game we are implementing
 
