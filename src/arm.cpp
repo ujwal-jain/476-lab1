@@ -7,7 +7,7 @@
 using namespace std;
 using namespace glm;
 
-#define ARMSCALE 0.3f
+#define ARMSCALE 0.4f
 #define PI 3.14159265f
 #define ARMROTSPEED 0.6f
 #define ARMHEIGHT 14.5f
@@ -51,14 +51,14 @@ public:
         // player rotation around world
         return rotation
                 // height above world
-                * translate(mat4(1), vec3(0, 0, -13.5))
-                * translate(mat4(1), vec3(-0.4, 0, -0.2))
+                * translate(mat4(1), vec3(0, 0, -13.7))
+                // * translate(mat4(1), vec3(-0.4, 0, -0.2))
                 // player rotation about mouse
                 * mouseRot
                 // rotation to orient the player correctly
                 * rotate(mat4(1), PI / 2, vec3(0, 0, 1))
                 * fireRotation
-                //* rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+                * translate(mat4(1), vec3(-0.4f, 0.05f, 0))
                 // scale the player
                 * scale(mat4(1), vec3(ARMSCALE));
     }

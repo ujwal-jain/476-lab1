@@ -73,8 +73,8 @@ public:
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
-    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/player-character.mtl");
-    MaterialLoader armMaterialLoader = MaterialLoader("../resources/new-wizard-arm2.mtl");
+    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/newPlayer.mtl");
+    MaterialLoader armMaterialLoader = MaterialLoader("../resources/newArm.mtl");
     MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
     MaterialLoader fireballMaterialLoader = MaterialLoader("../resources/fireball.mtl");
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
@@ -331,7 +331,7 @@ public:
         coneMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
-        playerOBJ->loadMesh(resourceDirectory + "/player-character.obj", (string *) "../resources/");
+        playerOBJ->loadMesh(resourceDirectory + "/newPlayer.obj", (string *) "../resources/");
         playerOBJ->resize();
         playerOBJ->init();
 
@@ -347,7 +347,7 @@ public:
 
 
         armOBJ = make_shared<Shape>();
-        armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
+        armOBJ->loadMesh(resourceDirectory + "/newArm.obj", (string *) "../resources/");
         armOBJ->resize();
         armOBJ->init();
 
@@ -675,6 +675,10 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
+        M = arm.getModel();
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        armOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+
         M = player.getModelAim();
         glUniform1f(prog->getUniform("Aim"), 1);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
@@ -795,7 +799,9 @@ public:
         }
         if(player.health == 0) {
             printf("Game over!\n");
-            gameDone = true;
+            // player.playerDeath();
+            
+            // gameDone = true;
         }
 
         M = world.getModel();
@@ -833,6 +839,9 @@ public:
         for(int i = 0; i < enemy_projectiles.size(); i++) {
             Projectile *proj = &enemy_projectiles[i];
             proj->renderParticleSys(V, partProg);
+        }
+        if(player.health == 0){
+            player.renderParticleSys(V, partProg);
         }
 
 		partProg->unbind();
