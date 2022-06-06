@@ -8,7 +8,6 @@
 
 #define PROJRADIUS 0.3f
 #define PROJSCALE 0.12f
-#define PROJROTSPEED 1.2f
 
 #ifndef PROJECTILE
 #define PROJECTILE
@@ -21,7 +20,7 @@ class Projectile
 {
 public:
     int w, a, s, d;
-    vec3 pos;
+    vec3 prevPos, pos;
     mat4 rot;
     vec3 rotAxis;
     boundingsphere hitbox;
@@ -30,9 +29,11 @@ public:
     particleSys *thePartSystem;
     vec3 color;
     float pHeight;
+    float projSpeed;
 
-    Projectile(vec3 pos, vec3 dir, int gracePeriodTime, vec3 partColor)
+    Projectile(vec3 pos, vec3 dir, int gracePeriodTime, vec3 partColor, bool isEnemy=false)
     {
+        this->prevPos = pos;
         this->pos = pos;
         rot = mat4(1);
         w = a = s = d = 0;
@@ -46,6 +47,12 @@ public:
         initParticleSys(partColor);
         color = partColor;
         pHeight = 0.43f;
+        if(!isEnemy)
+            projSpeed = 0.7f;
+        else {
+            projSpeed = 0.4f;
+            gracePeriodTime = 0;
+        }
     }
 
     void initParticleSys(vec3 partColor){
@@ -70,8 +77,9 @@ public:
     }
 
     void rotateProj(float frametime) {
-        rot *= rotate(mat4(1), frametime * PROJROTSPEED, rotAxis);
-        vec4 newPos = vec4(pos, 1) * rotate(mat4(1), -frametime * PROJROTSPEED, rotAxis);
+        rot *= rotate(mat4(1), frametime * projSpeed, rotAxis);
+        vec4 newPos = vec4(pos, 1) * rotate(mat4(1), -frametime * projSpeed, rotAxis);
+        prevPos = vec3(pos);
         pos = vec3(newPos);
         hitbox.center = pos;
 
@@ -83,6 +91,14 @@ public:
 
     void deteriorateProjectile() {
         lifespan -= 1;
+    }
+
+    void bounceOffWall(vec3 newRotAxis, vec3 startPos, float frametime) {
+        prevPos = startPos;
+        pos = startPos;
+        rotAxis = newRotAxis;
+        hitbox.center = startPos;
+        rotateProj(3 * frametime);
     }
 };
 #endif

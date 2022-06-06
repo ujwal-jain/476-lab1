@@ -517,10 +517,9 @@ public:
                 float x = (float) (rand() % 200 - 100) / 100.0f;
                 float y = (float) (rand() % 200 - 100) / 100.0f;
                 float z = (float) (rand() % 200 - 100) / 100.0f;
-                forward = normalize(vec3(x, y, z));
+                forward = -normalize(vec3(x, y, z));
             } while(worldCollision.getFaceHeight(forward) > 0.422);
-            printf("Done\n");
-            enemies.emplace_back(forward);
+            enemies.emplace_back(-forward);
         }
         for(int i = 0; i < NUM_ENEMIES; i++) {
             vec3 forward;
@@ -528,9 +527,9 @@ public:
                 float x = (float) (rand() % 200 - 100) / 100.0f;
                 float y = (float) (rand() % 200 - 100) / 100.0f;
                 float z = (float) (rand() % 200 - 100) / 100.0f;
-                forward = normalize(vec3(x, y, z));
+                forward = -normalize(vec3(x, y, z));
             } while(worldCollision.getFaceHeight(forward) > 0.422);
-            enemies2.emplace_back(forward);
+            enemies2.emplace_back(-forward);
         }
 
         game_stats.push_back(player.health);
@@ -622,12 +621,6 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
-        M = player.getModelAim();
-        glUniform1f(prog->getUniform("Aim"), 1);
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-        coneOBJ->draw(prog, GL_FALSE, coneMaterialLoader.materials);
-        glUniform1f(prog->getUniform("Aim"), 0);
-
 
        SetMaterial(prog, 1);
 
@@ -665,8 +658,12 @@ public:
                 continue;
             }
 
-            if(!worldCollision.isLocationValid(proj->pos, proj->pHeight) || proj->lifespan <= 0)
+            vec3 possibleVel = worldCollision.isProjLocationValid(proj->prevPos, proj->pos, proj->pHeight);
+            if(proj->lifespan <= 0)
                 player_projectiles.erase(player_projectiles.begin() + i);
+            else if(possibleVel != vec3(0, 0, 0)) {
+                proj->bounceOffWall(possibleVel, proj->prevPos, frametime);
+            }
             else {
                 proj->rotateProj(frametime);
                 M = proj->getModel();
@@ -717,13 +714,18 @@ public:
                 printf("Player hit!\n");
                 continue;
             }
-            if(proj->lifespan > 0) {
+            vec3 possibleVel = worldCollision.isProjLocationValid(proj->prevPos, proj->pos, proj->pHeight);
+            if(proj->lifespan <= 0)
+                enemy_projectiles.erase(enemy_projectiles.begin() + i);
+            else if(possibleVel != vec3(0, 0, 0)) {
+                proj->bounceOffWall(possibleVel, proj->prevPos, frametime);
+            }
+            else {
                 proj->rotateProj(frametime);
                 M = proj->getModel();
                 glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
                 projectileOBJ->draw(prog, GL_FALSE, fireballMaterialLoader.materials);
-            } else
-                enemy_projectiles.erase(enemy_projectiles.begin() + i);
+            }
         }
 
         for(int i = projectilesToDelete.size() - 1; i >= 0; i--) {
@@ -745,31 +747,30 @@ public:
             gameDone = true;
         }
 
-        M = world.getModel();
-
-        glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
-        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-
-        worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
-
         M = player.getModelHealth();
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         hpbarOBJ->draw(prog, GL_FALSE, hpbarMaterialLoader.materials);
+
+        M = player.getModelAim();
+        glUniform1f(prog->getUniform("Aim"), 1);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        coneOBJ->draw(prog, true, coneMaterialLoader.materials);
+        glUniform1f(prog->getUniform("Aim"), 0);
 
         prog->unbind();
 
         M = world.getModel() * 1.11f;
 
-         // Draw PARTICLES
-		partProg->bind();
-		texture->bind(partProg->getUniform("alphaTexture"));
+        // Draw PARTICLES
+        partProg->bind();
+        texture->bind(partProg->getUniform("alphaTexture"));
         CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
         CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
-		CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
-		CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.9, 0.8, 0.4));
+        CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
+        CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.9, 0.8, 0.4));
 
-		// thePartSystem->drawMe(partProg);
-		// thePartSystem->update();
+        // thePartSystem->drawMe(partProg);
+        // thePartSystem->update();
 
         for(int i = 0; i < player_projectiles.size(); i++) {
             Projectile *proj = &player_projectiles[i];
@@ -782,7 +783,20 @@ public:
             proj->renderParticleSys(V, partProg);
         }
 
-		partProg->unbind();
+        partProg->unbind();
+
+        prog->bind();
+
+        M = world.getModel();
+
+        glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+
+        worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
+
+
+        prog->unbind();
+
 
         glBindVertexArray(0);
     }

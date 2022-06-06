@@ -8,7 +8,7 @@ using namespace std;
 using namespace glm;
 
 #define PLAYERSCALE 0.7f
-#define PLAYERROTSPEED 0.6f
+#define PLAYERROTSPEED 0.4f
 #define PI 3.14f
 #define PLAYERPOSHEIGHT 13.6f
 
@@ -94,7 +94,7 @@ public:
                * mouseRot
                // rotation to orient the player correctly
                * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
-               * translate(mat4(1), vec3(0, 0.5, -1))
+               * translate(mat4(1), vec3(0, 0, -1))
                // scale the player
                * scale(mat4(1), vec3(PLAYERSCALE));
     }
@@ -161,7 +161,7 @@ public:
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
-        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + PI + PI/4.0f, vec3(0, 0, 1));
+        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + 5*PI/4.0f, vec3(0, 0, 1));
     }
 
     Projectile spawnProjectile() {

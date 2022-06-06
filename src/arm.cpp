@@ -9,7 +9,7 @@ using namespace glm;
 
 #define ARMSCALE 0.3f
 #define PI 3.14159265f
-#define ARMROTSPEED 0.6f
+#define ARMROTSPEED 0.4f
 #define ARMHEIGHT 14.5f
 
 #ifndef PROJECTILE
@@ -131,25 +131,30 @@ public:
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
         // rotation of the player towards the mouse direction
-        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + PI, vec3(0, 0, 1));
+        mouseRot = rotate(mat4(1), atan(mouseDir.y, mouseDir.x) + 5*PI/4, vec3(0, 0, 1));
     }
 
     Projectile spawnProjectile() {
+        // xComp
+        float xComp = pow(abs(mouseDir.x), 0.5f);
+        float yComp = pow(abs(mouseDir.y), 0.5f);
         // pDirRight represents the x component of the mouseDir vector in world space
-        float mouseRightToUp = abs(mouseDir.x / mouseDir.y);
+//        float mouseRightToUp = abs(pow(mouseDir.x, 0.5) / pow(mouseDir.y, 0.5));
+        float mouseRightToUp = xComp / yComp;
         vec3 pDirRight = right * mouseRightToUp;
         if(mouseDir.x < 0)
             pDirRight = -pDirRight;
 
         // pDirUp represents the y component of the mouseDir vector in world space
-        float mouseUpToRight = abs(mouseDir.y / mouseDir.x);
+//        float mouseUpToRight = abs(pow(mouseDir.y, 0.5) / pow(mouseDir.x, 0.5));
+        float mouseUpToRight = yComp / xComp;
         vec3 pDirUp = up * mouseUpToRight;
         if(mouseDir.y < 0)
             pDirUp = -pDirUp;
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) , 15, vec3(0.2f, 0.8f, 0.9f));
+        return Projectile(pos, pDir, 35, vec3(0.2f, 0.8f, 0.9f));
     }
 
 private:

@@ -10,7 +10,7 @@ using namespace glm;
 #define PLAYERSCALE 1.0f
 //#define PLAYERSCALE 0.7f
 #define ROTATIONSPEED 2.0f
-#define PROJSPAWN 100
+#define PROJSPAWN 125
 #define PI 3.14f
 #define ENEMYPROJSCALE (14.5f / 14.f)
 #define ENEMYPOSHEIGHT 14.f
@@ -32,7 +32,6 @@ public:
 
     Enemy(vec3 forward) {
         pos = ENEMYPOSHEIGHT * forward;
-        printf("%f %f %f\n", pos.x, pos.y, pos.z);
 
         // find rotation matrix that changes 0, 0, -1 -> fwd
         vec3 vb = vec3(0, 0, -1);
@@ -100,6 +99,6 @@ public:
     }
 
     Projectile spawnProjectile() {
-        return Projectile(ENEMYPROJSCALE * pos,-up, 0, vec3(0.9f, 0.3f, 0.1f));
+        return Projectile(ENEMYPROJSCALE * pos,-up, 0, vec3(0.9f, 0.3f, 0.1f), true);
     }
 };

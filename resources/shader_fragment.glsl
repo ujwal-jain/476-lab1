@@ -34,7 +34,7 @@ float getspec(vec3 lp) {
 void main()
 {
     if(Aim == 1.0) {
-        color = vec4(0.1, 0.1, 0.1, 0.05);
+        color = vec4(0.5, 0.5, 0.5, 1);
     } else {
         // diffuse coefficient
         float dC = getdiff(campos*2);
