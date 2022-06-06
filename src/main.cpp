@@ -73,8 +73,8 @@ public:
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
-    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/newPlayer.mtl");
-    MaterialLoader armMaterialLoader = MaterialLoader("../resources/newArm.mtl");
+    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/newestWizard.mtl");
+    MaterialLoader armMaterialLoader = MaterialLoader("../resources/newestArm2obj.mtl");
     MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
     MaterialLoader fireballMaterialLoader = MaterialLoader("../resources/fireball.mtl");
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
@@ -331,7 +331,7 @@ public:
         coneMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
-        playerOBJ->loadMesh(resourceDirectory + "/newPlayer.obj", (string *) "../resources/");
+        playerOBJ->loadMesh(resourceDirectory + "/newestWizard.obj", (string *) "../resources/");
         playerOBJ->resize();
         playerOBJ->init();
 
@@ -347,7 +347,7 @@ public:
 
 
         armOBJ = make_shared<Shape>();
-        armOBJ->loadMesh(resourceDirectory + "/newArm.obj", (string *) "../resources/");
+        armOBJ->loadMesh(resourceDirectory + "/newestArm2obj.obj", (string *) "../resources/");
         armOBJ->resize();
         armOBJ->init();
 
@@ -801,7 +801,7 @@ public:
             printf("Game over!\n");
             // player.playerDeath();
             
-            // gameDone = true;
+            gameDone = true;
         }
 
         M = world.getModel();
@@ -840,9 +840,9 @@ public:
             Projectile *proj = &enemy_projectiles[i];
             proj->renderParticleSys(V, partProg);
         }
-        if(player.health == 0){
-            player.renderParticleSys(V, partProg);
-        }
+        // if(player.health == 0){
+        //     player.renderParticleSys(V, partProg);
+        // }
 
 		partProg->unbind();
 
