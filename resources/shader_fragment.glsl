@@ -31,8 +31,36 @@ float getspec(vec3 lp) {
     return spec;
 }
 
+vec4 celShade(vec3 lp){
+    vec3 ld = normalize(vec3(lp-vertex_pos));
+    float intensity = dot(ld,normalize(vertex_normal));    
+    vec4 color2;
+
+    // if (intensity > 0.95)
+	// 	color2 = vec4(1.0, 1.0, 1.0, 1.0);
+	// else if (intensity > 0.5)
+	// 	color2 = vec4(0.9,0.9,0.9,1.0);
+	// else if (intensity > 0.25)
+	// 	color2 = vec4(0.8,0.8,0.8,1.0);
+	// else
+	// 	color2 = vec4(0.7,0.7,0.7,1.0);
+
+    if (intensity > 0.95)
+        color2 = vec4(1.0, 1.0, 1.0, 1.0);
+	else if (intensity > 0.5)
+		color2 = vec4(0.8,0.8,0.8,1.0);
+	else if (intensity > 0.25)
+		color2 = vec4(0.6,0.6,0.6,1.0);
+	else
+		color2 = vec4(0.4,0.4,0.4,1.0);
+    return color2;
+}
+
 void main()
 {
+    vec3 lightpos = vec3(0, 0, -50);//can replace with campos to fix light in one spot
+    
+    vec4 color2 = celShade(campos*2);
     if(Aim == 1.0) {
         color = vec4(0.1, 0.1, 0.1, 0.05);
     } else {
@@ -46,6 +74,6 @@ void main()
         float sC = getspec(campos*2);
 
         vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
-        color = vec4(color3, Opacity);
+        color = vec4(color3, Opacity) * color2;
     }
 }
