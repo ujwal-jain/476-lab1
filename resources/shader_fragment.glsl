@@ -74,6 +74,6 @@ void main()
         float sC = getspec(campos*2);
 
         vec3 color3 = amb * MatAmb + dC * MatDif + sC * MatSpec;
-        color = vec4(color3, Opacity) * color2;
+        color = vec4(color3, Opacity);
     }
 }

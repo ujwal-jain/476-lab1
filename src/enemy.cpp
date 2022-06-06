@@ -10,7 +10,7 @@ using namespace glm;
 #define PLAYERSCALE 1.0f
 //#define PLAYERSCALE 0.7f
 #define ROTATIONSPEED 2.0f
-#define PROJSPAWN 125
+#define PROJSPAWN 140
 #define PI 3.14f
 #define ENEMYPROJSCALE (14.5f / 14.f)
 #define ENEMYPOSHEIGHT 14.f
