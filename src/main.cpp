@@ -27,6 +27,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "camera.cpp"
 // #include "particleSys.h"
 #include "Texture.h"
+#include "AudioLibrary.h"
 
 
 #include "tiny_obj_loader.h"
@@ -38,6 +39,9 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "enemy.cpp"
+
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
 
 using namespace std;
 using namespace glm;
@@ -52,8 +56,10 @@ shared_ptr<Shape> hpbarOBJ;
 shared_ptr<Shape> coneOBJ;
 shared_ptr<Shape> sphere;
 
-
-
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 double get_last_elapsed_time()
 {
@@ -69,7 +75,6 @@ double get_last_elapsed_time()
 class Application : public EventCallbacks {
 
 public:
-
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
@@ -80,6 +85,8 @@ public:
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
     MaterialLoader enemyMaterialLoader = MaterialLoader("../resources/enemy-character.mtl");
     MaterialLoader coneMaterialLoader = MaterialLoader("../resources/player-aim.mtl");
+
+    AudioLibrary audioLibrary = AudioLibrary();
 
     // Our shader program
     std::shared_ptr<Program> prog, hud, texProg;
@@ -189,6 +196,7 @@ public:
             player_projectiles.push_back(arm.spawnProjectile());
             player.space = 1;
             arm.space = 1;
+            audioLibrary.playAudio("fireball-audio3");
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             player.space = 0;
@@ -567,8 +575,10 @@ public:
             enemies2.emplace_back(forward);
         }
 
+
         game_stats.push_back(player.health);
         game_stats.push_back(enemies.size() + enemies2.size());
+
     }
 
     void drawHUD() {
@@ -699,7 +709,8 @@ public:
             if(proj->graceTimeLeft == 0 && collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
-                printf("Player hit!\n");
+                audioLibrary.playAudio("wizard-hurt-audio");
+//                printf("Player hit!\n");
                 continue;
             }
             bool hitEnemy = false;
@@ -771,7 +782,8 @@ public:
             if(collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
-                printf("Player hit!\n");
+                audioLibrary.playAudio("wizard-hurt-audio");
+                //printf("Player hit!\n");
                 continue;
             }
             if(proj->lifespan > 0) {
