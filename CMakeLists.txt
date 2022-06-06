@@ -14,7 +14,7 @@ file(GLOB_RECURSE GLSL "resources/*.glsl")
 include_directories("ext/glad/include")
 
 # Set the executable.
-add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS} ${GLSL} src/WorldCollision.h src/Material.cpp src/Material.h src/MaterialLoader.h)
+add_executable(${CMAKE_PROJECT_NAME} ${SOURCES} ${HEADERS} ${GLSL} src/WorldCollision.h src/Material.cpp src/Material.h src/MaterialLoader.h src/AudioLibrary.h)
 
 
 

@@ -30,6 +30,9 @@ public:
     boundingsphere hitbox;
     float angle;
     vec3 axis;
+    particleSys *thePartSystem;
+    vec3 deathColor;
+
 
     Player()
     {
@@ -43,6 +46,8 @@ public:
         height = 0.43f;
         hitbox = boundingsphere(pos, 1.f);
         health = 10;
+        vec3 deathColor = vec3(0.9f, 0.8f, 0.7f);
+        
     }
 
     mat4 getModel() const {
@@ -56,6 +61,7 @@ public:
                 // rotation to orient the player correctly
                 * rotate(mat4(1), -PI / 2, vec3(1, 0, 0))
                 // scale the player
+                * translate(mat4(1), vec3(0.2f, 0, 0))
                 * scale(mat4(1), vec3(PLAYERSCALE));
     }
 
@@ -94,6 +100,7 @@ public:
                * mouseRot
                // rotation to orient the player correctly
                * rotate(mat4(1), PI / 2, vec3(1, 0, 0))
+               // location of triangle relative to world
                * translate(mat4(1), vec3(0, 0, -1))
                // scale the player
                * scale(mat4(1), vec3(PLAYERSCALE));
@@ -179,7 +186,27 @@ public:
 
         // pDir represents the direction of the projectile derived from the mouseDir
         vec3 pDir = normalize(pDirRight + pDirUp);
-        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z), 10, vec3(0.2f, 0.8f, 0.9f));
+        return Projectile(pos, vec3(pDir.x, pDir.y, pDir.z) * 1.5f, 10, vec3(0.2f, 0.8f, 0.9f));
+    }
+
+    void initParticleSys(vec3 partColor){
+        // cout << color.x <<"\n";
+        // thePartSystem = new particleSys(pos, vec3(0.2f, 0.8f, 0.9f));
+        // thePartSystem = new particleSys(pos, color);
+        thePartSystem = new particleSys(pos, partColor);
+
+        // thePartSystem = new particleSys(pos, vec3(color.x, color.y, color.z));
+
+		thePartSystem->gpuSetup();
+    }
+
+    void renderParticleSys(mat4 V, shared_ptr<Program> partProg){
+        thePartSystem->setCamera(V);
+        thePartSystem->drawMe(partProg);
+		thePartSystem->update(pos);
+    }
+    void playerDeath(){
+        initParticleSys(deathColor);
     }
 
 private:

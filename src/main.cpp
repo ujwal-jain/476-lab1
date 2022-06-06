@@ -27,6 +27,7 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include "camera.cpp"
 // #include "particleSys.h"
 #include "Texture.h"
+#include "AudioLibrary.h"
 
 
 #include "tiny_obj_loader.h"
@@ -39,6 +40,9 @@ CPE/CSC 471 Lab base code Wood/Dunn/Eckhardt
 #include <glm/gtc/matrix_transform.hpp>
 #include "enemy.cpp"
 
+#define MINIAUDIO_IMPLEMENTATION
+#include "miniaudio.h"
+
 using namespace std;
 using namespace glm;
 shared_ptr<Shape> shape;
@@ -50,8 +54,12 @@ shared_ptr<Shape> armOBJ;
 shared_ptr<Shape> asteroidOBJ;
 shared_ptr<Shape> hpbarOBJ;
 shared_ptr<Shape> coneOBJ;
+shared_ptr<Shape> sphere;
 
-
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 double get_last_elapsed_time()
 {
@@ -67,20 +75,21 @@ double get_last_elapsed_time()
 class Application : public EventCallbacks {
 
 public:
-
     WindowManager *windowManager = nullptr;
     WorldCollision worldCollision = WorldCollision();
     MaterialLoader worldMaterialLoader = MaterialLoader("../resources/world-v4.mtl");
-    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/player-character.mtl");
-    MaterialLoader armMaterialLoader = MaterialLoader("../resources/new-wizard-arm2.mtl");
+    MaterialLoader playerMaterialLoader = MaterialLoader("../resources/newestWizard.mtl");
+    MaterialLoader armMaterialLoader = MaterialLoader("../resources/newestArm2obj.mtl");
     MaterialLoader asteroidMaterialLoader = MaterialLoader("../resources/asteroid.mtl");
     MaterialLoader fireballMaterialLoader = MaterialLoader("../resources/fireball.mtl");
     MaterialLoader hpbarMaterialLoader = MaterialLoader("../resources/hpbar3.mtl");
     MaterialLoader enemyMaterialLoader = MaterialLoader("../resources/enemy-character.mtl");
     MaterialLoader coneMaterialLoader = MaterialLoader("../resources/player-aim.mtl");
 
+    AudioLibrary audioLibrary = AudioLibrary();
+
     // Our shader program
-    std::shared_ptr<Program> prog, hud;
+    std::shared_ptr<Program> prog, hud, texProg;
     MaterialLoader enemyMaterialLoader1 = MaterialLoader("../resources/enemy1.mtl");
     MaterialLoader enemyMaterialLoader2 = MaterialLoader("../resources/enemy2.mtl");
 
@@ -93,6 +102,8 @@ public:
     //PARTICLE SYSTEM
 	// OpenGL handle to texture data used in particle
 	std::shared_ptr<Texture> texture;
+    std::shared_ptr<Texture> backgroundTex;
+
 	bool keyToggles[256] = { false };
 	//some particle variables
 
@@ -185,6 +196,7 @@ public:
             player_projectiles.push_back(arm.spawnProjectile());
             player.space = 1;
             arm.space = 1;
+            audioLibrary.playAudio("fireball-audio3");
         }
         if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
             player.space = 0;
@@ -327,7 +339,7 @@ public:
         coneMaterialLoader.readMaterialFile();
 
         playerOBJ = make_shared<Shape>();
-        playerOBJ->loadMesh(resourceDirectory + "/player-character.obj", (string *) "../resources/");
+        playerOBJ->loadMesh(resourceDirectory + "/newestWizard.obj", (string *) "../resources/");
         playerOBJ->resize();
         playerOBJ->init();
 
@@ -343,7 +355,7 @@ public:
 
 
         armOBJ = make_shared<Shape>();
-        armOBJ->loadMesh(resourceDirectory + "/new-wizard-arm2.obj", (string *) "../resources/");
+        armOBJ->loadMesh(resourceDirectory + "/newestArm2obj.obj", (string *) "../resources/");
         armOBJ->resize();
         armOBJ->init();
 
@@ -366,6 +378,11 @@ public:
         asteroidOBJ->loadMesh(resourceDirectory + "/asteroid.obj", (string *) "../resources/");
         asteroidOBJ->resize();
         asteroidOBJ->init();
+
+        sphere = make_shared<Shape>();
+        sphere->loadMesh(resourceDirectory + "/sphere.obj", (string *) "../resources/");
+        sphere->resize();
+        sphere->init();
     }
     void SetMaterial(shared_ptr<Program> curS, int i) {
     	switch (i) {
@@ -507,6 +524,31 @@ public:
 		partProg->addAttribute("vertPos");
 		partProg->addAttribute("vertCol");
 
+        backgroundTex = make_shared<Texture>();
+  		backgroundTex->setFilename(resourceDirectory + "/space3.jpg");
+  		backgroundTex->init();
+  		backgroundTex->setUnit(1);
+  		backgroundTex->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
+
+          // Initialize the GLSL program that we will use for texture mapping
+		texProg = make_shared<Program>();
+		texProg->setVerbose(true);
+		texProg->setShaderNames(resourceDirectory + "/tex_vert.glsl", resourceDirectory + "/tex_frag0.glsl");
+		texProg->init();
+		texProg->addUniform("P");
+		texProg->addUniform("V");
+		texProg->addUniform("M");
+		texProg->addUniform("flip");
+		texProg->addUniform("Texture0");
+		texProg->addUniform("MatDiff");
+		texProg->addUniform("MatSpec");
+		texProg->addUniform("MatAmb");
+		texProg->addUniform("MatShine");
+		texProg->addUniform("lightPos");
+		texProg->addAttribute("vertPos");
+		texProg->addAttribute("vertNor");
+		texProg->addAttribute("vertTex");
+
 		// thePartSystem = new particleSys(vec3(0, 0, 0));
 		// thePartSystem->gpuSetup();
 
@@ -532,8 +574,10 @@ public:
             enemies2.emplace_back(-forward);
         }
 
+
         game_stats.push_back(player.health);
         game_stats.push_back(enemies.size() + enemies2.size());
+
     }
 
     void drawHUD() {
@@ -600,12 +644,31 @@ public:
         // player cam
         if(camState)
             P = glm::perspective((float) (3.14159 / 5.5f), (float) ((float) width / (float) height), 0.01f,
-                             100.0f); //so much type casting... GLM metods are quite funny ones
+                             1000.0f); //so much type casting... GLM metods are quite funny ones
          // top down
          else
             P = glm::perspective((float) (3.14159 / 4.f), (float) ((float) width / (float) height), 0.1f,
                                  1000.0f); //so much type casting... GLM metods are quite funny ones
         M = glm::mat4(1.f);
+
+        texProg->bind();
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("P"), 1, GL_FALSE, &P[0][0]));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("V"), 1, GL_FALSE, &V[0][0]));
+        M = glm::scale(mat4(1), vec3(900.0));
+        CHECKED_GL_CALL(glUniformMatrix4fv(texProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
+
+		//draw big background sphere
+		glUniform1i(texProg->getUniform("flip"), -1);
+		backgroundTex->bind(texProg->getUniform("Texture0"));
+
+        sphere->draw(texProg, GL_FALSE, {});
+		// Model->pushMatrix();
+		// 	Model->loadIdentity();
+		// 	Model->scale(vec3(300.0));
+		// 	setModel(texProg, Model);
+		// 	sphere->draw(texProg);
+		// Model->popMatrix();
+		texProg->unbind();
 
         prog->bind();
         glUniform1f(prog->getUniform("Aim"), 0);
@@ -621,6 +684,15 @@ public:
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
         playerOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
 
+        M = arm.getModel();
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        armOBJ->draw(prog, GL_FALSE, playerMaterialLoader.materials);
+
+        M = player.getModelAim();
+        glUniform1f(prog->getUniform("Aim"), 1);
+        glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
+        coneOBJ->draw(prog, GL_FALSE, coneMaterialLoader.materials);
+        glUniform1f(prog->getUniform("Aim"), 0);
 
        SetMaterial(prog, 1);
 
@@ -635,7 +707,8 @@ public:
             if(proj->graceTimeLeft == 0 && collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
-                printf("Player hit!\n");
+                audioLibrary.playAudio("wizard-hurt-audio");
+//                printf("Player hit!\n");
                 continue;
             }
             bool hitEnemy = false;
@@ -711,7 +784,8 @@ public:
             if(collisions::detectSphereSphere(proj->hitbox, player.hitbox)) {
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
-                printf("Player hit!\n");
+                audioLibrary.playAudio("wizard-hurt-audio");
+                //printf("Player hit!\n");
                 continue;
             }
             vec3 possibleVel = worldCollision.isProjLocationValid(proj->prevPos, proj->pos, proj->pHeight);
@@ -744,6 +818,8 @@ public:
         }
         if(player.health == 0) {
             printf("Game over!\n");
+            // player.playerDeath();
+            
             gameDone = true;
         }
 
@@ -782,6 +858,9 @@ public:
             Projectile *proj = &enemy_projectiles[i];
             proj->renderParticleSys(V, partProg);
         }
+        // if(player.health == 0){
+        //     player.renderParticleSys(V, partProg);
+        // }
 
         partProg->unbind();
 
@@ -797,6 +876,8 @@ public:
 
         prog->unbind();
 
+
+        
 
         glBindVertexArray(0);
     }
