@@ -525,7 +525,7 @@ public:
 		partProg->addAttribute("vertCol");
 
         backgroundTex = make_shared<Texture>();
-  		backgroundTex->setFilename(resourceDirectory + "/space3.jpg");
+  		backgroundTex->setFilename(resourceDirectory + "/backdrop2.jpg");
   		backgroundTex->init();
   		backgroundTex->setUnit(1);
   		backgroundTex->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
@@ -577,6 +577,9 @@ public:
 
         game_stats.push_back(player.health);
         game_stats.push_back(enemies.size() + enemies2.size());
+
+
+        audioLibrary.playAudioInfintely("ambient1");
 
     }
 
@@ -714,6 +717,7 @@ public:
             bool hitEnemy = false;
             for(int j = 0; j < enemies.size(); j++) {
                 if(collisions::detectSphereSphere(proj->hitbox, enemies[j].hitbox)) {
+                    audioLibrary.playAudio("enemy-hit");
                     enemiesHit.push_back(j);
                     projectilesToDelete.push_back(i);
                     hitEnemy=true;
@@ -721,6 +725,7 @@ public:
             }
             for(int j = 0; j < enemies2.size(); j++) {
                 if(collisions::detectSphereSphere(proj->hitbox, enemies2[j].hitbox)) {
+                    audioLibrary.playAudio("enemy-hit");
                     enemiesHit2.push_back(j);
                     projectilesToDelete.push_back(i);
                     hitEnemy=true;

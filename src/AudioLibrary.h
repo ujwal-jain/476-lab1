@@ -21,10 +21,18 @@ public:
         logDetails();
     }
 
+    void playAudioInfintely(string audioFile) {
+        *result = ma_sound_init_from_file(engine.get(), ("../resources/audio/" + audioFile + ".wav").c_str(), 0, NULL, NULL, sound.get());
+        ma_sound_start(sound.get());
+        logDetails();
+    }
+
+
+
 private:
     shared_ptr<ma_result> result= make_shared<ma_result>();
     shared_ptr<ma_engine> engine = make_shared<ma_engine>();
-//    shared_ptr<ma_sound> sound = make_shared<ma_sound>();
+    shared_ptr<ma_sound> sound = make_shared<ma_sound>();
 
     void logDetails() {
         printf("MINIAUDIO LOG: %s\n", ma_result_description(*result));
