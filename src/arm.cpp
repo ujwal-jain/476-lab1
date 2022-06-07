@@ -126,7 +126,7 @@ public:
         float yposFloat = static_cast<float>(ypos);
 
         mouseDirX = -(xposFloat - (width / 2));
-         mouseDirY = -(yposFloat - (height / 2));
+        mouseDirY = -(yposFloat - (height / 2));
 
         // direction of the mouse relative to the screen, that is why z is always 0.
         mouseDir = vec3(normalize(vec2(mouseDirX, mouseDirY)), 0);
@@ -135,18 +135,16 @@ public:
     }
 
     Projectile spawnProjectile() {
-        // xComp
         float xComp = pow(abs(mouseDir.x), 0.5f);
         float yComp = pow(abs(mouseDir.y), 0.5f);
+        
         // pDirRight represents the x component of the mouseDir vector in world space
-//        float mouseRightToUp = abs(pow(mouseDir.x, 0.5) / pow(mouseDir.y, 0.5));
         float mouseRightToUp = xComp / yComp;
         vec3 pDirRight = right * mouseRightToUp;
         if(mouseDir.x < 0)
             pDirRight = -pDirRight;
 
         // pDirUp represents the y component of the mouseDir vector in world space
-//        float mouseUpToRight = abs(pow(mouseDir.y, 0.5) / pow(mouseDir.x, 0.5));
         float mouseUpToRight = yComp / xComp;
         vec3 pDirUp = up * mouseUpToRight;
         if(mouseDir.y < 0)

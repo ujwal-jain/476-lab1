@@ -56,13 +56,7 @@ public:
     }
 
     void initParticleSys(vec3 partColor){
-        // cout << color.x <<"\n";
-        // thePartSystem = new particleSys(pos, vec3(0.2f, 0.8f, 0.9f));
-        // thePartSystem = new particleSys(pos, color);
         thePartSystem = new particleSys(pos, partColor);
-
-        // thePartSystem = new particleSys(pos, vec3(color.x, color.y, color.z));
-
 		thePartSystem->gpuSetup();
     }
 

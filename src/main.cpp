@@ -70,8 +70,6 @@ double get_last_elapsed_time()
 	return difference;
 }
 
-// Player movement
-
 class Application : public EventCallbacks {
 
 public:
@@ -217,6 +215,9 @@ public:
 		if (key == GLFW_KEY_Z && action == GLFW_RELEASE) {
 			glPolygonMode( GL_FRONT_AND_BACK, GL_FILL );
 		}
+        if (key == GLFW_KEY_K && action == GLFW_PRESS) {
+            enemies.erase(enemies.begin());
+        }
     }
 
     // callback for the mouse when clicked move the triangle when helper functions
@@ -353,7 +354,6 @@ public:
         hpbarOBJ->resize();
         hpbarOBJ->init();
 
-
         armOBJ = make_shared<Shape>();
         armOBJ->loadMesh(resourceDirectory + "/newestArm2obj.obj", (string *) "../resources/");
         armOBJ->resize();
@@ -378,11 +378,6 @@ public:
         asteroidOBJ->loadMesh(resourceDirectory + "/asteroid.obj", (string *) "../resources/");
         asteroidOBJ->resize();
         asteroidOBJ->init();
-
-        sphere = make_shared<Shape>();
-        sphere->loadMesh(resourceDirectory + "/sphere.obj", (string *) "../resources/");
-        sphere->resize();
-        sphere->init();
     }
     void SetMaterial(shared_ptr<Program> curS, int i) {
     	switch (i) {
@@ -403,42 +398,6 @@ public:
     			glUniform3f(curS->getUniform("MatDif"), 0.9, 0.3, 0.1);
     			glUniform3f(curS->getUniform("MatSpec"), 0.45, 0.15, 0.05);
     			glUniform1f(curS->getUniform("MatShine"), 27.9);
-    		break;
-			case 3:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.04, 0.04, 0.04);
-    			glUniform3f(curS->getUniform("MatDif"), 0.4, 0.4, 0.4);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.2, 0.2, 0.2);
-    			glUniform1f(curS->getUniform("MatShine"), 27.9);
-    		break;
-			case 4:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.02, 0.02, 0.02);
-    			glUniform3f(curS->getUniform("MatDif"), 0.2, 0.2, 0.2);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.1, 0.1, 0.1);
-    			glUniform1f(curS->getUniform("MatShine"), 27.9);
-    		break;
-			case 5:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.01, 0.01, 0.01);
-    			glUniform3f(curS->getUniform("MatDif"), 0.1, 0.1, 0.1);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.05, 0.05, 0.05);
-    			glUniform1f(curS->getUniform("MatShine"), 227.9);
-    		break;
-			case 6:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.07, 0.07, 0.07);
-    			glUniform3f(curS->getUniform("MatDif"), 0.7, 0.7, 0.7);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.035, 0.035, 0.035);
-    			glUniform1f(curS->getUniform("MatShine"), 500.9);
-    		break;
-			case 7:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.095, 0.075, 0.041);
-    			glUniform3f(curS->getUniform("MatDif"), 0.95, 0.75, 0.41);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.47, 0.37, 0.21);
-    			glUniform1f(curS->getUniform("MatShine"), 500.9);
-    		break;
-			case 8:
-    			glUniform3f(curS->getUniform("MatAmb"), 0.095, 0.095, 0.095);
-    			glUniform3f(curS->getUniform("MatDif"), 0.95, 0.95, 0.95);
-    			glUniform3f(curS->getUniform("MatSpec"), 0.5, 0.5, 0.5);
-    			glUniform1f(curS->getUniform("MatShine"), 500.9);
     		break;
   		}
     }
@@ -504,7 +463,6 @@ public:
 		texture->setUnit(0);
 		texture->setWrapModes(GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE);
 
-
 		// Initialize PARTICLE the GLSL program.
 		partProg = make_shared<Program>();
 		partProg->setVerbose(true);
@@ -549,10 +507,6 @@ public:
 		texProg->addAttribute("vertNor");
 		texProg->addAttribute("vertTex");
 
-		// thePartSystem = new particleSys(vec3(0, 0, 0));
-		// thePartSystem->gpuSetup();
-
-
         for(int i = 0; i < NUM_ENEMIES; i++) {
             vec3 forward;
             do {
@@ -574,13 +528,9 @@ public:
             enemies2.emplace_back(-forward);
         }
 
-
         game_stats.push_back(player.health);
         game_stats.push_back(enemies.size() + enemies2.size());
-
-
         audioLibrary.playAudioInfintely("ambient1");
-
     }
 
     void drawHUD() {
@@ -614,7 +564,6 @@ public:
 
         hud->unbind();
         glBindVertexArray(0);
-
     }
 
     void drawScene(bool camState) {
@@ -663,14 +612,8 @@ public:
 		//draw big background sphere
 		glUniform1i(texProg->getUniform("flip"), -1);
 		backgroundTex->bind(texProg->getUniform("Texture0"));
-
         sphere->draw(texProg, GL_FALSE, {});
-		// Model->pushMatrix();
-		// 	Model->loadIdentity();
-		// 	Model->scale(vec3(300.0));
-		// 	setModel(texProg, Model);
-		// 	sphere->draw(texProg);
-		// Model->popMatrix();
+
 		texProg->unbind();
 
         prog->bind();
@@ -711,7 +654,6 @@ public:
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
                 audioLibrary.playAudio("wizard-hurt-audio");
-//                printf("Player hit!\n");
                 continue;
             }
             bool hitEnemy = false;
@@ -790,7 +732,6 @@ public:
                 player.health -= 1;
                 projectilesToDelete.push_back(i);
                 audioLibrary.playAudio("wizard-hurt-audio");
-                //printf("Player hit!\n");
                 continue;
             }
             vec3 possibleVel = worldCollision.isProjLocationValid(proj->prevPos, proj->pos, proj->pHeight);
@@ -822,9 +763,7 @@ public:
             gameDone = true;
         }
         if(player.health == 0) {
-            printf("Game over!\n");
-            // player.playerDeath();
-            
+            printf("Game over!\n");            
             gameDone = true;
         }
 
@@ -841,7 +780,6 @@ public:
         prog->unbind();
 
         M = world.getModel() * 1.11f;
-
         // Draw PARTICLES
         partProg->bind();
         texture->bind(partProg->getUniform("alphaTexture"));
@@ -850,22 +788,15 @@ public:
         CHECKED_GL_CALL(glUniformMatrix4fv(partProg->getUniform("M"), 1, GL_FALSE, &M[0][0]));
         CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.9, 0.8, 0.4));
 
-        // thePartSystem->drawMe(partProg);
-        // thePartSystem->update();
-
         for(int i = 0; i < player_projectiles.size(); i++) {
             Projectile *proj = &player_projectiles[i];
             proj->renderParticleSys(V, partProg);
         }
-        // CHECKED_GL_CALL(glUniform3f(partProg->getUniform("pColor"), 0.2, 0.2, 0.9));
 
         for(int i = 0; i < enemy_projectiles.size(); i++) {
             Projectile *proj = &enemy_projectiles[i];
             proj->renderParticleSys(V, partProg);
         }
-        // if(player.health == 0){
-        //     player.renderParticleSys(V, partProg);
-        // }
 
         partProg->unbind();
 
@@ -875,15 +806,9 @@ public:
 
         glUniform3f(prog->getUniform("campos"), 2 * player.pos[0], 2 * player.pos[1], 2 * player.pos[2]);
         glUniformMatrix4fv(prog->getUniform("M"), 1, GL_FALSE, &M[0][0]);
-
         worldOBJ->draw(prog, GL_FALSE, worldMaterialLoader.materials);
-
-
-        prog->unbind();
-
-
         
-
+        prog->unbind();
         glBindVertexArray(0);
     }
 
@@ -897,7 +822,6 @@ public:
         // Get current frame buffer size.
         int width, height;
         glfwGetFramebufferSize(windowManager->getHandle(), &width, &height);
-
 
         // player cam
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -928,7 +852,6 @@ int main(int argc, char **argv)
 		and GL context, etc. */
 	WindowManager * windowManager = new WindowManager();
 	windowManager->init(1920, 1080);
-//    windowManager->init(960, 540);
 	windowManager->setEventCallbacks(application);
 	application->windowManager = windowManager;
 
